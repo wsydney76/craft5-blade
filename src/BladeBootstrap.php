@@ -26,20 +26,38 @@ class BladeBootstrap
 
     protected function boot(string $viewsPath, string $cachePath): void
     {
-        $container = new Container();
+        $container = new CraftContainer();
+        // Set as global instance so app() helpers inside Illuminate resolve it
+        Container::setInstance($container);
+
         $filesystem = new Filesystem();
         $events = new Dispatcher($container);
 
+        // Bind core services into the container so Blade internals can resolve them
+        $container->instance('config', [
+            'view.paths' => [$viewsPath],
+            'view.compiled' => $cachePath,
+        ]);
+        $container->instance('files', $filesystem);
+
+        // Also bind Container/Application contracts so app() works outside Laravel
+        $container->instance(\Illuminate\Contracts\Container\Container::class, $container);
+        $container->instance(\Illuminate\Contracts\Foundation\Application::class, $container);
+
         // Blade compiler
         $this->bladeCompiler = new BladeCompiler($filesystem, $cachePath);
+        if (method_exists($this->bladeCompiler, 'setContainer')) {
+            $this->bladeCompiler->setContainer($container);
+        }
+        $container->instance('blade.compiler', $this->bladeCompiler);
 
         // Engine resolver
         $resolver = new EngineResolver();
         $resolver->register('blade', function () {
             return new CompilerEngine($this->bladeCompiler);
         });
-        $resolver->register('php', function () {
-            return new PhpEngine();
+        $resolver->register('php', function () use ($filesystem) {
+            return new PhpEngine($filesystem);
         });
 
         // View finder
@@ -47,6 +65,19 @@ class BladeBootstrap
 
         // Factory
         $this->viewFactory = new Factory($resolver, $finder, $events);
+        if (method_exists($this->viewFactory, 'setContainer')) {
+            $this->viewFactory->setContainer($container);
+        }
+
+        // Bind the Factory contracts so components can resolve Illuminate\Contracts\View\Factory
+        $container->instance(Factory::class, $this->viewFactory);
+        $container->instance(\Illuminate\Contracts\View\Factory::class, $this->viewFactory);
+        $container->instance('view', $this->viewFactory);
+
+        // If you use class-based components, register them here, e.g.:
+        // if (method_exists($this->bladeCompiler, 'component')) {
+        //     $this->bladeCompiler->component('image', \wsydney76\blade\View\Components\Image::class);
+        // }
     }
 
     /**
