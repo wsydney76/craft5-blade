@@ -17,21 +17,12 @@ class BaseBladeController extends Controller
     {
         $this->blade = BladePlugin::getInstance()->blade;
 
-        $this->blade->share('systemName', Craft::$app->getSystemName());
-        $this->blade->share('currentSite', Craft::$app->sites->getCurrentSite());
-        $this->blade->share('currentUser', Craft::$app->user->getIdentity());
-
-        // Render Twig directive
-        $this->blade->directive('renderTwig', function($expression) {
-            return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
-        });
-
         return parent::beforeAction($action);
     }
 
     public function actionRender()
     {
-        $template = Craft::$app->urlManager->getRouteParams()['template'] ?? 'index';
+        $template = Craft::$app->urlManager->getRouteParams()['blade_template'] ?? 'index';
         return $this->blade->render($template);
     }
 }

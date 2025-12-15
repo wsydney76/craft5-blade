@@ -2,7 +2,9 @@
 
 namespace wsydney76\blade;
 
+use Craft;
 use craft\helpers\App;
+use craft\web\twig\Extension;
 use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
@@ -34,6 +36,15 @@ class Blade
         $this->boot(
             App::env('BLADE_VIEWS_PATH') ?: '/var/www/html/resources/views',
             App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache');
+
+        foreach ($this->getGlobals() as $key => $value) {
+            $this->share($key, $value);
+        }
+
+        // Render Twig directive
+        $this->directive('renderTwig', function($expression) {
+            return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
+        });
     }
 
     protected function boot(string $viewsPath, string $cachePath): void
@@ -130,5 +141,12 @@ class Blade
     public function compiler(): BladeCompiler
     {
         return $this->bladeCompiler;
+    }
+
+    protected function getGlobals(): array
+    {
+        $extension = new Extension(Craft::$app->getView(), Craft::$app->getView()->twig);
+        return $extension->getGlobals();
+
     }
 }

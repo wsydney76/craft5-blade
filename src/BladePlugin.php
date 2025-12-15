@@ -7,8 +7,12 @@ use craft\base\Element;
 use craft\base\Event;
 use craft\base\Plugin;
 use craft\elements\Entry;
+use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\SetElementRouteEvent;
+use craft\helpers\App;
+use craft\helpers\FileHelper;
+use craft\utilities\ClearCaches;
 use craft\web\UrlManager;
 use wsydney76\blade\web\twig\BladeTwigExtension;
 
@@ -80,11 +84,37 @@ class BladePlugin extends Plugin
                     // Assume the setting is correct, will throw an error anyway if not
                     $template = explode(':', $template)[1];
                     Craft::$app->urlManager->setRouteParams([
-                        'template' => $template,
+                        'blade_template' => $template,
                     ]);
                     $event->route = "_blade/base-blade/render";
                     $event->handled = true;
                 }
             });
+
+        Event::on(
+            ClearCaches::class,
+            ClearCaches::EVENT_REGISTER_CACHE_OPTIONS,
+            function(RegisterCacheOptionsEvent $event) {
+                // Register caches for the Clear Cache Utility
+                $event->options = array_merge(
+                    $event->options,
+                    [[
+                        'key' => 'blade',
+                        'label' => 'Blade Template Cache',
+                        'action' => [$this, 'clearCache'],
+                        'info' => 'Clears the compiled Blade template cache files.',
+                    ]]
+                );
+            }
+        );
+    }
+
+
+
+    public function clearCache(): void
+    {
+        // template caches
+        $dir = App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache';
+        FileHelper::clearDirectory($dir);
     }
 }
