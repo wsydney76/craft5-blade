@@ -8,6 +8,8 @@ class CraftContainer extends Container
 {
     /**
      * Return the application namespace used by Blade when resolving component classes.
+     *
+     * TODO: No longer needed???
      */
     public function getNamespace(): string
     {

@@ -26,8 +26,8 @@ class BladeBootstrap
 
     protected function boot(string $viewsPath, string $cachePath): void
     {
+        // Use custom container that provides getNamespace()
         $container = new CraftContainer();
-        // Set as global instance so app() helpers inside Illuminate resolve it
         Container::setInstance($container);
 
         $filesystem = new Filesystem();
