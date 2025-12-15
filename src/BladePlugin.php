@@ -10,6 +10,7 @@ use craft\elements\Entry;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\SetElementRouteEvent;
 use craft\web\UrlManager;
+use wsydney76\blade\web\twig\BladeTwigExtension;
 
 /**
  * Blade plugin
@@ -24,7 +25,9 @@ class BladePlugin extends Plugin
     {
         return [
             'components' => [
-                // Define component configs here...
+                'blade' => [
+                    'class' => Blade::class,
+                ],
             ],
         ];
     }
@@ -40,6 +43,7 @@ class BladePlugin extends Plugin
         Craft::$app->onInit(function() {
             // ...
         });
+        Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
     }
 
     private function attachEventHandlers(): void

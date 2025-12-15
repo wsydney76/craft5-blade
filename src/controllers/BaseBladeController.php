@@ -4,7 +4,7 @@ namespace wsydney76\blade\controllers;
 
 use Craft;
 use craft\web\Controller;
-use wsydney76\blade\BladeBootstrap;
+use wsydney76\blade\BladePlugin;
 
 /**
  * Base Blade controller
@@ -15,10 +15,7 @@ class BaseBladeController extends Controller
 
     public function beforeAction($action): bool
     {
-        $this->blade = new BladeBootstrap(
-            '/var/www/html/resources/views',
-            '/var/www/html/storage/blade/cache'
-        );
+        $this->blade = BladePlugin::getInstance()->blade;
 
         $this->blade->share('systemName', Craft::$app->getSystemName());
         $this->blade->share('currentSite', Craft::$app->sites->getCurrentSite());

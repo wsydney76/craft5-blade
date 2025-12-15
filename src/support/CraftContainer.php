@@ -1,6 +1,6 @@
 <?php
 
-namespace wsydney76\blade;
+namespace wsydney76\blade\support;
 
 use Illuminate\Container\Container;
 

@@ -2,26 +2,31 @@
 
 namespace wsydney76\blade;
 
+use craft\helpers\App;
 use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\View\Compilers\BladeCompiler;
+use Illuminate\View\Engines\CompilerEngine;
+use Illuminate\View\Engines\EngineResolver;
+use Illuminate\View\Engines\PhpEngine;
 use Illuminate\View\Factory;
 use Illuminate\View\FileViewFinder;
-use Illuminate\View\Engines\EngineResolver;
-use Illuminate\View\Engines\CompilerEngine;
-use Illuminate\View\Engines\PhpEngine;
-use Illuminate\View\Compilers\BladeCompiler;
+use wsydney76\blade\support\CraftContainer;
 
-class BladeBootstrap
+class Blade
 {
     protected Factory $viewFactory;
     protected BladeCompiler $bladeCompiler;
 
+    public string $viewsPath;
+    public string $cachePath;
+
     public function __construct(
-        string $viewsPath,
-        string $cachePath
     ) {
-        $this->boot($viewsPath, $cachePath);
+        $this->viewsPath = App::env('BLADE_VIEWS_PATH') ?: '/var/www/html/resources/views';
+        $this->cachePath = App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache';
+        $this->boot($this->viewsPath, $this->cachePath);
     }
 
     protected function boot(string $viewsPath, string $cachePath): void
