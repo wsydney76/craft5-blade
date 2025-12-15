@@ -14,19 +14,26 @@ use Illuminate\View\Factory;
 use Illuminate\View\FileViewFinder;
 use wsydney76\blade\support\CraftContainer;
 
+/**
+ *  Blade view engine integration for Craft CMS.
+ *
+ *  Provides a simple interface to render Blade templates within Craft,
+ *  including support for custom directives and global data sharing.
+ * /
+ * class Blade
+ *
+ * CAUTION: This is (mostly) AI generated code and may require adjustments to work properly.
+ */
 class Blade
 {
     protected Factory $viewFactory;
     protected BladeCompiler $bladeCompiler;
 
-    public string $viewsPath;
-    public string $cachePath;
-
-    public function __construct(
-    ) {
-        $this->viewsPath = App::env('BLADE_VIEWS_PATH') ?: '/var/www/html/resources/views';
-        $this->cachePath = App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache';
-        $this->boot($this->viewsPath, $this->cachePath);
+    public function __construct()
+    {
+        $this->boot(
+            App::env('BLADE_VIEWS_PATH') ?: '/var/www/html/resources/views',
+            App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache');
     }
 
     protected function boot(string $viewsPath, string $cachePath): void
@@ -58,10 +65,10 @@ class Blade
 
         // Engine resolver
         $resolver = new EngineResolver();
-        $resolver->register('blade', function () {
+        $resolver->register('blade', function() {
             return new CompilerEngine($this->bladeCompiler);
         });
-        $resolver->register('php', function () use ($filesystem) {
+        $resolver->register('php', function() use ($filesystem) {
             return new PhpEngine($filesystem);
         });
 

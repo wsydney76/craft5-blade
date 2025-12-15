@@ -51,12 +51,6 @@ class BladePlugin extends Plugin
         // Register event handlers here ...
         // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
 
-       /* Event::on(
-            UrlManager::class,
-            UrlManager::EVENT_REGISTER_SITE_URL_RULES, function (RegisterUrlRulesEvent $event) {
-            $event->rules['blade/render/<template:{slug}>'] = '_blade/base-blade/render';
-        });*/
-
         Event::on(
             Entry::class,
             Element::EVENT_SET_ROUTE,
