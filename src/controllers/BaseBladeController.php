@@ -24,6 +24,11 @@ class BaseBladeController extends Controller
         $this->blade->share('currentSite', Craft::$app->sites->getCurrentSite());
         $this->blade->share('currentUser', Craft::$app->user->getIdentity());
 
+        // Render Twig directive
+        $this->blade->directive('renderTwig', function($expression) {
+            return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
+        });
+
         return parent::beforeAction($action);
     }
 
