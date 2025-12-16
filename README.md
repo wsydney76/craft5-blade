@@ -38,7 +38,7 @@ Run `ddev craft plugin/install _blade`.
 - **Blade components** - Create and use reusable components with props
 - **Custom directives** - Define custom Blade directives for your application
 - **Twig integration** - Call Twig templates from Blade using the `@renderTwig()` directive
-- **Global data sharing** - Access Craft globals in Blade templates (like `craft`, site name, etc.)
+- **Global data sharing** - Access Craft global variables in Blade templates (like `craft`, site name, etc.)
 - **Template inheritance** - Use Blade's powerful layout system with `@extends` and `@section`
 
 ## Limitations
@@ -244,9 +244,9 @@ public function actionIndex()
 </p>
 ```
 
-### Accessing Craft Globals
+### Accessing Craft Global Variables
 
-All Craft globals are automatically available in Blade templates:
+All [Craft global variables](https://craftcms.com/docs/5.x/reference/twig/global-variables.html#craft) (except `_globals`) are available in Blade templates:
 
 ```blade
 <p>App Name: {{ $systemName }}</p>
