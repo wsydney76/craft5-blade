@@ -9,6 +9,7 @@ use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Compilers\BladeCompiler;
+use Illuminate\View\DynamicComponent;
 use Illuminate\View\Engines\CompilerEngine;
 use Illuminate\View\Engines\EngineResolver;
 use Illuminate\View\Engines\PhpEngine;
@@ -61,11 +62,41 @@ class Blade
         $filesystem = new Filesystem();
         $events = new Dispatcher($container);
 
+        // Ensure the compiled cache directory exists
+        if (!$filesystem->exists($cachePath)) {
+            $filesystem->makeDirectory($cachePath, 0775, true, true);
+        }
+
         // Bind core services into the container so Blade internals can resolve them
-        $container->instance('config', [
-            'view.paths' => [$viewsPath],
-            'view.compiled' => $cachePath,
-        ]);
+        // Provide a config repository with a get() method (required by components)
+        $configItems = [
+            'view' => [
+                'paths' => [$viewsPath],
+                'compiled' => $cachePath,
+            ],
+        ];
+        if (class_exists('Illuminate\\Config\\Repository')) {
+            $repoClass = 'Illuminate\\Config\\Repository';
+            $container->instance('config', new $repoClass($configItems));
+        } else {
+            // Minimal fallback with dot-notation get()
+            $container->instance('config', new class($configItems) {
+                private array $items;
+                public function __construct(array $items) { $this->items = $items; }
+                public function get(string $key, $default = null) {
+                    $segments = $key !== '' ? explode('.', $key) : [];
+                    $value = $this->items;
+                    foreach ($segments as $seg) {
+                        if (is_array($value) && array_key_exists($seg, $value)) {
+                            $value = $value[$seg];
+                        } else {
+                            return $default;
+                        }
+                    }
+                    return $value;
+                }
+            });
+        }
         $container->instance('files', $filesystem);
 
         // Also bind Container/Application contracts so app() works outside Laravel
@@ -78,6 +109,12 @@ class Blade
             $this->bladeCompiler->setContainer($container);
         }
         $container->instance('blade.compiler', $this->bladeCompiler);
+
+        // Enable component tags (required for x-dynamic-component)
+        if (method_exists($this->bladeCompiler, 'component')) {
+            // Register dynamic component support
+            $this->bladeCompiler->component('dynamic-component', \Illuminate\View\DynamicComponent::class);
+        }
 
         // Engine resolver
         $resolver = new EngineResolver();
