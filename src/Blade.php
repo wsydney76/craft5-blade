@@ -41,6 +41,9 @@ class Blade
             $this->share($key, $value);
         }
 
+        // TODO: Handle other element types
+        $this->share('entry', Craft::$app->urlManager->getMatchedElement());
+
         // Render Twig directive
         $this->directive('renderTwig', function($expression) {
             return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
