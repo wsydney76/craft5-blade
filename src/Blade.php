@@ -25,6 +25,8 @@ use wsydney76\blade\support\CraftContainer;
  * class Blade
  *
  * CAUTION: This is (mostly) AI generated code and may require adjustments to work properly.
+ *
+ * TODO: This is territory that requires deeper Laravel/Blade expertise.
  */
 class Blade
 {
@@ -146,6 +148,11 @@ class Blade
         return $this->bladeCompiler;
     }
 
+    /**
+     * Return global variables from Craft's Twig environment.
+     *
+     * @return array
+     */
     protected function getGlobals(): array
     {
         $extension = new Extension(Craft::$app->getView(), Craft::$app->getView()->twig);

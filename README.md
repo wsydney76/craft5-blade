@@ -27,10 +27,11 @@ php craft plugin/install _blade
 ## Limitations
 
 - Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
-- Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` or `paginate` twiq tags.
+- Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` or `paginate` twig tags.
 - There is no direct equivalent for Twig filters; in most cases PHP functions can be used instead.
 - For now, only used for entry element type. Should work with other element types but not yet tested.
 - IDE support for Blade templates in Craft projects may be limited compared to Twig, e.g. there is no code completion for custom fields.
+- Not performance optimized for large scale applications; suitable for small to medium sites.
 
 ## Usage
 
