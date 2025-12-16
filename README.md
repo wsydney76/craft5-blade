@@ -328,3 +328,144 @@ Defaults, assuming DDEV setup:
 - `BLADE_VIEWS_PATH`: `/var/www/html/resources/views`
 - `BLADE_CACHE_PATH`: `/var/www/html/storage/runtime/blade/cache`
 
+## Reactive components
+
+Livewire-like reactive components are not supported, as Livewire is deeply bound to core Laravel. However, you can integrate with Alpine.js (which is used by Livewire behind the scenes) to come somewhat close and keep most of your controller logic and templates.
+
+A simplified example (skips error handling, browser history, popstate event handling, etc.):
+
+### Controller
+
+```php
+<?php
+
+namespace modules\main\controllers;
+
+use Craft;
+use craft\elements\Entry;
+use craft\helpers\UrlHelper;
+use craft\web\Controller;
+use wsydney76\blade\BladePlugin;
+
+/**
+ * Search controller
+ */
+class SearchController extends Controller
+{
+    public $defaultAction = 'index';
+    protected array|int|bool $allowAnonymous = ['index', 'fetch'];
+
+    public string $q = '';
+
+    public function beforeAction($action): bool
+    {
+        $this->q = Craft::$app->getRequest()->getParam('q', '');
+        return parent::beforeAction($action);
+    }
+
+    public function actionIndex()
+    {
+        return BladePlugin::getInstance()->blade->render('search', [
+            'entry' => Craft::$app->urlManager->getMatchedElement(),
+            'q' => $this->q,
+            'fetchUrl' => UrlHelper::actionUrl('main/search/fetch'),
+            'resultHtml' => $this->renderComponent()
+        ]);
+    }
+
+    public function actionFetch()
+    {
+        return $this->renderComponent();
+    }
+
+    protected function renderComponent()
+    {
+        $entries = [];
+        if (trim($this->q) !== '') {
+            $entries = Entry::find()
+                ->section('post')
+                ->search($this->q)
+                ->all();
+        }
+
+        return BladePlugin::getInstance()->blade->render('components.search-results', [
+            'items' => $entries,
+            'q' => $this->q,
+        ]);
+    }
+}
+
+```
+
+### Main Blade Template
+
+```blade
+@props([
+    'entry' => null,
+    'q' => '',
+    'fetchUrl',
+    'resultHtml' => '',
+])
+<x-layout title="Search">
+    <h1>{{ ($entry->title ?? null) ?: 'Search' }}</h1>
+
+    <div x-data="searchWidget({
+            q: @js($q),
+            fetchUrl: @js($fetchUrl),
+            html: @js($resultHtml)
+        })"
+        class="space-y-4"
+    >
+        <form @submit.prevent>
+            <input x-model.debounce.500ms="q"
+                   autofocus
+                   type="text"
+                   name="q"
+                   placeholder="Search..."
+                   class="w-full"
+            >
+        </form>
+
+        <div id="results" x-html="html"></div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('searchWidget', ({ q, fetchUrl, html }) => ({
+                q,
+                fetchUrl,
+                html,
+
+                init() {
+                    this.$watch('q', () => this.fetch());
+                },
+
+                async fetch() {
+                    const params = new URLSearchParams({ q: this.q });
+                    const res = await fetch(`${this.fetchUrl}&${params.toString()}`);
+                    this.html = await res.text();
+                },
+            }));
+        });
+    </script>
+</x-layout>
+```
+
+### Component Template
+
+```blade
+@php($hasQuery = isset($q) && trim($q) !== '')
+
+@if(!empty($items))
+    <ul>
+        @foreach($items as $item)
+            <li>
+                <a href="{{ $item->url }}">{{ $item->title }}</a>
+            </li>
+        @endforeach
+    </ul>
+@elseif($hasQuery)
+    <p>No results found.</p>
+@endif
+
+```
