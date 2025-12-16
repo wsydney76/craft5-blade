@@ -9,7 +9,6 @@ use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Compilers\BladeCompiler;
-use Illuminate\View\DynamicComponent;
 use Illuminate\View\Engines\CompilerEngine;
 use Illuminate\View\Engines\EngineResolver;
 use Illuminate\View\Engines\PhpEngine;
@@ -43,9 +42,6 @@ class Blade
         foreach ($this->getGlobals() as $key => $value) {
             $this->share($key, $value);
         }
-
-        // TODO: Handle other element types
-        $this->share('entry', Craft::$app->urlManager->getMatchedElement());
 
         // Render Twig directive
         $this->directive('renderTwig', function($expression) {

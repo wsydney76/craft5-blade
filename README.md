@@ -2,18 +2,35 @@
 
 Enables Laravel Blade templates for Craft CMS, providing a modern templating engine alternative to Twig.
 
+Readme work in progress
+
 ## Requirements
 
 This plugin requires Craft CMS 5.8.0 or later, and PHP 8.2 or later.
 
 ## Installation
 
-Install the plugin via Composer:
+Add to `composer.json` file in your project root to require this plugin:
 
-```bash
-composer require wsydney76/craft5-blade
-php craft plugin/install _blade
+```json
+{
+  "require": {
+    "wsydney76/craft5-blade": "dev-main"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/wsydney76/craft5-blade"
+    }
+  ]
+}
 ```
+
+Then run `composer update` to install the plugin.
+
+Run `ddev craft plugin/install _blade`.
 
 ## Features
 
@@ -31,7 +48,8 @@ php craft plugin/install _blade
 - There is no direct equivalent for Twig filters; in most cases PHP functions can be used instead.
 - For now, only used for entry element type. Should work with other element types but not yet tested.
 - IDE support for Blade templates in Craft projects may be limited compared to Twig, e.g. there is no code completion for custom fields.
-- Not performance optimized for large scale applications; suitable for small to medium sites.
+- The central Blade.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
+- Not yet reviewed in terms of performance/memory usage.
 
 ## Usage
 
@@ -46,26 +64,24 @@ Template cache is stored in `storage/runtime/blade/cache` (or set `BLADE_CACHE_P
 Create `.blade.php` files in your views directory:
 
 ```blade
-@props([
-    'name' => 'Guest',
-    'entries'
-])
+<x-layout :title="$entry->title">
+    <article class="prose prose-lg max-w-none">
+        @if ($entry->image)
+            <x-image :image="$entry->image->one()" width="1024" height="400" />
+        @endif
 
-@php
-    /** @var \craft\elements\Entry $entry */
-@endphp
+        <h1 class="text-3xl font-bold">{{ $entry->title }}</h1>
 
-<x-layout title="Welcome">
-    <h1>Hello, {{ $name }}</h1>
+        <x-meta :entry="$entry" />
 
-    <h1>Site: {{ $systemName }}</h1>
+        @if ($entry->teaser)
+            <p class="my-4 text-xl font-bold">{{ $entry->teaser }}</p>
+        @endif
 
-    @foreach ($entries as $entry)
-        <div>
-            <h2>{{ $entry->title }}</h2>
-            <p>Posted: {{ $entry->postDate->format('Y-m-d') }}</p>
+        <div class="mx-auto mt-8">
+            <x-blocks :blocks="$entry->bodyContent->all()" />
         </div>
-    @endforeach
+    </article>
 </x-layout>
 ```
 
@@ -80,13 +96,17 @@ Create reusable components in `resources/views/components/`:
 <!DOCTYPE html>
 <html>
 <head>
+    ...
     <title>{{ $title }}</title>
+    {!! Vite::getInstance()->vite->script('/resources/js/app.js', false) !!}
     @renderTwig('_layouts/nav.twig')
 </head>
 <body>
+    ...
     <main>
         {{ $slot }}
     </main>
+    ...
 </body>
 </html>
 ```
@@ -104,26 +124,21 @@ Use components with:
 ```blade
 <x-layout title="My Page">
     <x-image :image="$entry->image->one()" width="600" height="400" />
+    ... content ...
 </x-layout>
 ```
 
-### Routing for Craft entries
+#### Dynamic Components
 
-In order to use Blade templates for Craft entries, set the template in the section settings
+Supports dynamic components:
 
-* to a custom controller action that renders a Blade template: `action:main/blog/show`
-
-```php
-public function actionShow() {
-    $blade = BladePlugin::getInstance()->blade;
-
-    return $blade->render('blog.show');
-}
+```blade
+@foreach ($entry->myMatrixField->all() as $block)
+    <x-dynamic-component
+        :component="'blocks.' . $block->type->handle"
+        :block="$block" />
+@endforeach
 ```
-
-* or to a Blade template directly: `blade:blog.show`
-
-In both cases, the entry will be available in the template as `$entry` via `Craft::$app->urlManager->getMatchedElement()`.
 
 ### Rendering from PHP
 
@@ -152,6 +167,36 @@ Call Blade templates using the `renderBlade()` function:
 {{ renderBlade('component.blocks.text', { text: 'Craft', class: 'text-xl' }) }}
 ```
 
+### Routing for Craft entries
+
+In order to use Blade templates for Craft entries, set the template in the section settings
+
+* to a custom controller action that renders a Blade template: `action:main/blog/show`
+
+```php
+public function actionShow()
+    {
+        $entry = Craft::$app->urlManager->getMatchedElement();
+        if (!$entry) {
+            throw new NotFoundHttpException('Page not found');
+        }
+
+        $prevNextCriteria = [
+            'section' => $entry->section->handle,
+        ];
+
+        return BladePlugin::getInstance()->blade->render('article', [
+            'entry' => $entry,
+            'prev' => $entry->getPrev($prevNextCriteria),
+            'next' => $entry->getNext($prevNextCriteria)
+        ]);
+    }
+```
+
+* or to a Blade template directly: `blade:blog.show`
+
+In both cases, the current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
+
 ### Accessing Craft Globals
 
 All Craft globals are automatically available in Blade templates:
@@ -162,8 +207,6 @@ All Craft globals are automatically available in Blade templates:
 <p>User name: {{ $currentUser->name }}</p>
 <p>Craft variable: {{ $craft->app->language }}</p>
 ```
-
-Additionally, the entry matched by the URL is available as `$entry` when rendering Craft entries (or null, if there is none).
 
 ## Custom Directives
 
@@ -184,7 +227,44 @@ BladePlugin->getInstance()->blade->share('settings', Entry::find()->section('set
 ```
 
 Then access it in any Blade template:
+
+```blade
+<footer class="mt-12 border-t border-b-gray-500 pt-4">
+    &copy; {{ $settings->copyright }} {{ $now->format('Y') }}
+</footer>
 ```
+
+This mimics Craft's `preloadSingles` feature for Twig templates. Kind of.
+
+## Common Blade Settings
+
+If multiple controllers are use, extend from a base controller to set common Blade settings:
+
+```php
+public function beforeAction($action): bool
+    {
+        $blade = BladePlugin::getInstance()->blade;
+      
+        // Share global settings entry
+        $blade->share('settings', Entry::find()->section('settings')->one());
+
+        // Datetime directive
+        $blade->directive('datetime', function($expression) {
+            return "<?php echo ($expression)->format('Y-m-d H:i'); ?>";
+        });
+        return parent::beforeAction($action); // TODO: Change the autogenerated stub
+    }
+```
+
+## Clearing Cache
+
+Remove cached Blade templates via console command:
+
+```bash
+php craft clear-caches/blade
+```
+
+Or via Control Panel: Utilities → Caches → Blade Template Cache
 
 ## Configuration
 
