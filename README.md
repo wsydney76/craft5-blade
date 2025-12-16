@@ -197,6 +197,53 @@ public function actionShow()
 
 In both cases, the current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
 
+### Handling pagination
+
+As there is no direct equivalent to Twig's `paginate` tag, handle pagination in the controller and pass the page results to the Blade template:
+
+```php
+use craft\db\Paginator;
+use craft\web\twig\variables\Paginate;
+...
+
+public function actionIndex()
+{
+    $paginator = new Paginator(
+        query: Entry::find()->section('post'),
+        config: [
+            'pageSize' => 4,
+            'currentPage' => Craft::$app->request->getPageNum(),
+        ]);
+
+    return BladePlugin::getInstance()->blade->render('articles.index', [
+        'entry' => Craft::$app->urlManager->getMatchedElement(),
+        'posts' => $paginator->getPageResults(),
+        'pageInfo' => (new Paginate())->create($paginator),
+    ]);
+}
+
+```
+
+```blade
+<ul>
+    @foreach($posts as $post)
+        <li>{{ $post->title }}</li>
+    @endforeach
+</ul>
+
+<p>
+    Showing page {{ $pageInfo->currentPage }} of {{ $pageInfo->totalPages }}.
+    
+    @if($pageInfo->currentPage > 1)
+        <a href="{{ $pageInfo->getPrevUrl() }}">Previous page</a>
+    @endif
+
+    @if($pageInfo->currentPage < $pageInfo->totalPages)
+        <a href="{{ $pageInfo->getNextUrl() }}">Next page</a>
+    @endif
+</p>
+```
+
 ### Accessing Craft Globals
 
 All Craft globals are automatically available in Blade templates:
@@ -238,7 +285,7 @@ This mimics Craft's `preloadSingles` feature for Twig templates. Kind of.
 
 ## Common Blade Settings
 
-If multiple controllers are use, extend from a base controller to set common Blade settings:
+If multiple controllers are used, extend from a base controller to set common Blade settings:
 
 ```php
 public function beforeAction($action): bool
