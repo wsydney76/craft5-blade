@@ -99,9 +99,9 @@ Create reusable components in `resources/views/components/`:
     ...
     <title>{{ $title }}</title>
     {!! Vite::getInstance()->vite->script('/resources/js/app.js', false) !!}
-    @renderTwig('_layouts/nav.twig')
 </head>
 <body>
+    @renderTwig('_layouts/nav.twig')
     ...
     <main>
         {{ $slot }}
