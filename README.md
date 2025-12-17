@@ -336,9 +336,92 @@ Consider porting existing components to Twig using Sprig plugin or alike.
 
 Otherwise, you can integrate with Alpine.js (which is used by Livewire behind the scenes) to come somewhat close and keep most of your controller logic and templates.
 
-For convenience, this plugin ships with a [Craft CMS Action Twig Helper Component](https://github.com/wsydney76/extras/blob/main/ACTIONS.md), stolen from a private plugin.
+For convenience, this plugin ships with a copy of a [Craft CMS Action Twig Helper Component](https://github.com/wsydney76/extras/blob/main/ACTIONS.md), stolen from a private plugin.
 
 Pull it in with `@renderTwig('@blade/_actions.twig')`
+
+In this simple example, you would
+
+* replace `wire:model.live.debounce.500ms="q"` with `x-model.debounce.500ms="q"`
+* add an Alpine.js component that watches `q` and calls the Craft Action to fetch updated results and update the DOM accordingly.
+* place the search results in a separate Blade component that can be rendered both on initial page load and via the Action, enabling partial reload.
+
+
+### Main Blade Template
+
+```blade
+@props([
+    'entry' => null,
+    'q' => '',
+    'resultHtml' => '',
+])
+<x-layout title="Search">
+
+    <h1>{{ ($entry->title ?? null) ?: 'Search' }}</h1>
+
+    <div x-data="searchWidget({
+            q: @js($q),
+            html: @js($resultHtml)
+        })"
+        class="space-y-4"
+    >
+        <form @submit.prevent>
+            <input x-model.debounce.500ms="q"
+                   autofocus
+                   type="text"
+                   name="q"
+                   placeholder="Search..."
+                   class="w-full"
+            >
+        </form>
+
+        <div id="results" x-html="html"></div>
+    </div>
+    
+    @renderTwig('@blade/_actions.twig')
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('searchWidget', ({ q, html }) => ({
+                q,
+                html,
+
+                init() {
+                    this.$watch('q', () => this.fetch());
+                },
+
+               fetch() {
+                    window.Actions.postAction("main/search/fetch",
+                        { 'q': this.q },
+                        (data) => {
+                            this.html = data;
+                        }
+                    );
+                },
+            }));
+        });
+    </script>
+</x-layout>
+```
+
+### Component Template
+
+```blade
+@php($hasQuery = isset($q) && trim($q) !== '')
+
+@if(!empty($items))
+    <ul>
+        @foreach($items as $item)
+            <li>
+                <a href="{{ $item->url }}">{{ $item->title }}</a>
+            </li>
+        @endforeach
+    </ul>
+@elseif($hasQuery)
+    <p>No results found.</p>
+@endif
+
+```
 
 ### Controller
 
@@ -399,81 +482,5 @@ class SearchController extends Controller
         ]);
     }
 }
-
-```
-
-### Main Blade Template
-
-```blade
-@props([
-    'entry' => null,
-    'q' => '',
-    'resultHtml' => '',
-])
-<x-layout title="Search">
-
-    @renderTwig('@blade/_actions.twig')
-
-    <h1>{{ ($entry->title ?? null) ?: 'Search' }}</h1>
-
-    <div x-data="searchWidget({
-            q: @js($q),
-            html: @js($resultHtml)
-        })"
-        class="space-y-4"
-    >
-        <form @submit.prevent>
-            <input x-model.debounce.500ms="q"
-                   autofocus
-                   type="text"
-                   name="q"
-                   placeholder="Search..."
-                   class="w-full"
-            >
-        </form>
-
-        <div id="results" x-html="html"></div>
-    </div>
-
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('searchWidget', ({ q, html }) => ({
-                q,
-                html,
-
-                init() {
-                    this.$watch('q', () => this.fetch());
-                },
-
-               fetch() {
-                    window.Actions.postAction("main/search/fetch",
-                        { 'q': this.q },
-                        (data) => {
-                            this.html = data;
-                        }
-                    );
-                },
-            }));
-        });
-    </script>
-</x-layout>
-```
-
-### Component Template
-
-```blade
-@php($hasQuery = isset($q) && trim($q) !== '')
-
-@if(!empty($items))
-    <ul>
-        @foreach($items as $item)
-            <li>
-                <a href="{{ $item->url }}">{{ $item->title }}</a>
-            </li>
-        @endforeach
-    </ul>
-@elseif($hasQuery)
-    <p>No results found.</p>
-@endif
 
 ```
