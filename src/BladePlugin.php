@@ -8,12 +8,14 @@ use craft\base\Event;
 use craft\base\Plugin;
 use craft\elements\Entry;
 use craft\events\RegisterCacheOptionsEvent;
+use craft\events\RegisterTemplateRootsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\SetElementRouteEvent;
 use craft\helpers\App;
 use craft\helpers\FileHelper;
 use craft\utilities\ClearCaches;
 use craft\web\UrlManager;
+use craft\web\View;
 use wsydney76\blade\web\twig\BladeTwigExtension;
 
 /**
@@ -54,6 +56,14 @@ class BladePlugin extends Plugin
     {
         // Register event handlers here ...
         // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
+
+        Event::on(
+            View::class,
+            View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
+            function(RegisterTemplateRootsEvent $event) {
+                $event->roots['@blade'] = __DIR__ . '/templates';
+            }
+        );
 
         Event::on(
             Entry::class,

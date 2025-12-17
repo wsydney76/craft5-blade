@@ -330,9 +330,15 @@ Defaults, assuming DDEV setup:
 
 ## Reactive components
 
-Livewire-like reactive components are not supported, as Livewire is deeply bound to core Laravel. However, you can integrate with Alpine.js (which is used by Livewire behind the scenes) to come somewhat close and keep most of your controller logic and templates.
+Livewire-like reactive components are not supported, as Livewire is deeply bound to core Laravel. 
 
-A simplified example (skips error handling, browser history, popstate event handling, etc.):
+Consider porting existing components to Twig using Sprig plugin or alike.
+
+Otherwise, you can integrate with Alpine.js (which is used by Livewire behind the scenes) to come somewhat close and keep most of your controller logic and templates.
+
+For convenience, this plugin ships with a [Craft CMS Action Twig Helper Component](https://github.com/wsydney76/extras/blob/main/ACTIONS.md), stolen from a private plugin.
+
+Pull it in with `@renderTwig('@blade/_actions.twig')`
 
 ### Controller
 
@@ -368,7 +374,6 @@ class SearchController extends Controller
         return BladePlugin::getInstance()->blade->render('search', [
             'entry' => Craft::$app->urlManager->getMatchedElement(),
             'q' => $this->q,
-            'fetchUrl' => UrlHelper::actionUrl('main/search/fetch'),
             'resultHtml' => $this->renderComponent()
         ]);
     }
@@ -403,15 +408,16 @@ class SearchController extends Controller
 @props([
     'entry' => null,
     'q' => '',
-    'fetchUrl',
     'resultHtml' => '',
 ])
 <x-layout title="Search">
+
+    @renderTwig('@blade/_actions.twig')
+
     <h1>{{ ($entry->title ?? null) ?: 'Search' }}</h1>
 
     <div x-data="searchWidget({
             q: @js($q),
-            fetchUrl: @js($fetchUrl),
             html: @js($resultHtml)
         })"
         class="space-y-4"
@@ -431,19 +437,21 @@ class SearchController extends Controller
 
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('searchWidget', ({ q, fetchUrl, html }) => ({
+            Alpine.data('searchWidget', ({ q, html }) => ({
                 q,
-                fetchUrl,
                 html,
 
                 init() {
                     this.$watch('q', () => this.fetch());
                 },
 
-                async fetch() {
-                    const params = new URLSearchParams({ q: this.q });
-                    const res = await fetch(`${this.fetchUrl}&${params.toString()}`);
-                    this.html = await res.text();
+               fetch() {
+                    window.Actions.postAction("main/search/fetch",
+                        { 'q': this.q },
+                        (data) => {
+                            this.html = data;
+                        }
+                    );
                 },
             }));
         });
