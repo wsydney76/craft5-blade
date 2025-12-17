@@ -340,12 +340,17 @@ For convenience, this plugin ships with a copy of a [Craft CMS Action Twig Helpe
 
 Pull it in with `@renderTwig('@blade/_actions.twig')`
 
-In this simple example, you would
+In this example, you would
 
-* replace `wire:model.live.debounce.500ms="q"` with `x-model.debounce.500ms="q"`
-* add an Alpine.js component that watches `q` and calls the Craft Action to fetch updated results and update the DOM accordingly.
+* replace `wire:model.live.debounce.500ms="q"` with `x-model="q"` and `@input.debounce.500ms="fetch"`
+* add an Alpine.js component that implements `fetch()` and calls the Craft Action to fetch updated results and update the DOM accordingly.
 * place the search results in a separate Blade component that can be rendered both on initial page load and via the Action, enabling partial reload.
 
+If required, add handling for browser history updates including `popState` events.
+
+* add `@popstate.window="popState"` event handler to the root element
+* add a `searchParams` array to track which parameters to sync with the URL.
+* implement `pushState()` and `popState()` methods in the Alpine component. Those are reusable, so you can copy them to other components as needed, or extract to a shared mixin.
 
 ### Main Blade Template
 
@@ -363,6 +368,7 @@ In this simple example, you would
             q: @js($q),
             html: @js($resultHtml)
         })"
+        @popstate.window="popState"
         class="space-y-4"
     >
         <form @submit.prevent>
@@ -385,18 +391,37 @@ In this simple example, you would
             Alpine.data('searchWidget', ({ q, html }) => ({
                 q,
                 html,
+                searchParams: ['q'],
 
-                init() {
-                    this.$watch('q', () => this.fetch());
-                },
-
-               fetch() {
-                    window.Actions.postAction("main/search/fetch",
+                fetch(pushState = true) {
+                    pushState && this.pushState();
+                    window.Actions.postAction('main/search/fetch',
                         { 'q': this.q },
                         (data) => {
                             this.html = data;
-                        }
+                        },
                     );
+                },
+
+                pushState() {
+                    const url = new URL(window.location);
+                    this.searchParams.forEach((name) => {
+                        const value = this[name] ?? '';
+                        if (value) {
+                            url.searchParams.set(name, value);
+                        } else {
+                            url.searchParams.delete(name);
+                        }
+                    });
+                    window.history.pushState({}, '', url);
+                },
+
+                popState() {
+                    const params = new URLSearchParams(window.location.search);
+                    this.searchParams.forEach((name) => {
+                        this[name] = params.get(name) || '';
+                    });
+                    this.fetch(false);
                 },
             }));
         });
