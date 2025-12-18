@@ -348,11 +348,11 @@ In this example, you would
 
 If required, add handling for browser history updates including `popState` events.
 
-* add `@popstate.window="popState"` event handler to the root element
-* add a `searchParams` array to track which parameters to sync with the URL.
-* implement `pushState()` and `popState()` methods in the Alpine component. Those are reusable, so you can copy them to other components as needed, or extract to a shared mixin.
+See [docs for helper functions](https://github.com/wsydney76/extras/blob/main/ACTIONS.md#alpine-js-browser-history-management).
 
 ### Main Blade Template
+
+Extract JavaScript into your asset bundle as needed.
 
 ```blade
 @props([
@@ -361,18 +361,18 @@ If required, add handling for browser history updates including `popState` event
     'resultHtml' => '',
 ])
 <x-layout title="Search">
-
     <h1>{{ ($entry->title ?? null) ?: 'Search' }}</h1>
 
     <div x-data="searchWidget({
             q: @js($q),
             html: @js($resultHtml)
-        })"
-        @popstate.window="popState"
-        class="space-y-4"
+            })"
+         @popstate.window="popState"
+         class="space-y-4"
     >
         <form @submit.prevent>
-            <input x-model.debounce.500ms="q"
+            <input x-model="q"
+                   @input.debounce.500ms="fetch"
                    autofocus
                    type="text"
                    name="q"
@@ -383,7 +383,7 @@ If required, add handling for browser history updates including `popState` event
 
         <div id="results" x-html="html"></div>
     </div>
-    
+
     @renderTwig('@blade/_actions.twig')
 
     <script>
@@ -393,35 +393,22 @@ If required, add handling for browser history updates including `popState` event
                 html,
                 searchParams: ['q'],
 
-                fetch(pushState = true) {
-                    pushState && this.pushState();
+                fetch(updateHistory = true) {
+                    updateHistory && window.Actions.pushState.call(this, this.searchParams);
+                    if (!this.q) {
+                        this.html = '';
+                        return;
+                    }
                     window.Actions.postAction('main/search/fetch',
-                        { 'q': this.q },
+                        { q: this.q },
                         (data) => {
                             this.html = data;
                         },
                     );
                 },
 
-                pushState() {
-                    const url = new URL(window.location);
-                    this.searchParams.forEach((name) => {
-                        const value = this[name] ?? '';
-                        if (value) {
-                            url.searchParams.set(name, value);
-                        } else {
-                            url.searchParams.delete(name);
-                        }
-                    });
-                    window.history.pushState({}, '', url);
-                },
-
                 popState() {
-                    const params = new URLSearchParams(window.location.search);
-                    this.searchParams.forEach((name) => {
-                        this[name] = params.get(name) || '';
-                    });
-                    this.fetch(false);
+                    window.Actions.popState.call(this, this.searchParams, () => this.fetch(false));
                 },
             }));
         });
