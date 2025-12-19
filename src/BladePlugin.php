@@ -9,12 +9,10 @@ use craft\base\Plugin;
 use craft\elements\Entry;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterTemplateRootsEvent;
-use craft\events\RegisterUrlRulesEvent;
 use craft\events\SetElementRouteEvent;
 use craft\helpers\App;
 use craft\helpers\FileHelper;
 use craft\utilities\ClearCaches;
-use craft\web\UrlManager;
 use craft\web\View;
 use wsydney76\blade\web\twig\BladeTwigExtension;
 
@@ -32,7 +30,7 @@ class BladePlugin extends Plugin
         return [
             'components' => [
                 'blade' => [
-                    'class' => Blade::class,
+                    'class' => BladeBootstrap::class,
                 ],
             ],
         ];
