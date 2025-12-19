@@ -2,7 +2,6 @@
 
 namespace wsydney76\blade\controllers;
 
-use Craft;
 use craft\web\Controller;
 use wsydney76\blade\Blade;
 
@@ -11,9 +10,8 @@ use wsydney76\blade\Blade;
  */
 class BaseBladeController extends Controller
 {
-    public function actionRender()
+    public function actionRender($view)
     {
-        $template = Craft::$app->urlManager->getRouteParams()['blade_template'] ?? 'index';
-        return Blade::render($template);
+        return Blade::render($view);
     }
 }

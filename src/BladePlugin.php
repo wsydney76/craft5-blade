@@ -90,9 +90,9 @@ class BladePlugin extends Plugin
 
                 if (str_starts_with($template, 'blade:')) {
                     // Assume the setting is correct, will throw an error anyway if not
-                    $template = explode(':', $template)[1];
+                    $view = explode(':', $template)[1];
                     Craft::$app->urlManager->setRouteParams([
-                        'blade_template' => $template,
+                        'view' => $view,
                     ]);
                     $event->route = "_blade/base-blade/render";
                     $event->handled = true;
