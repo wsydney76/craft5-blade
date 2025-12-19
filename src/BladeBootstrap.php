@@ -73,28 +73,10 @@ class BladeBootstrap
                 'compiled' => $cachePath,
             ],
         ];
-        if (class_exists('Illuminate\\Config\\Repository')) {
-            $repoClass = 'Illuminate\\Config\\Repository';
-            $container->instance('config', new $repoClass($configItems));
-        } else {
-            // Minimal fallback with dot-notation get()
-            $container->instance('config', new class($configItems) {
-                private array $items;
-                public function __construct(array $items) { $this->items = $items; }
-                public function get(string $key, $default = null) {
-                    $segments = $key !== '' ? explode('.', $key) : [];
-                    $value = $this->items;
-                    foreach ($segments as $seg) {
-                        if (is_array($value) && array_key_exists($seg, $value)) {
-                            $value = $value[$seg];
-                        } else {
-                            return $default;
-                        }
-                    }
-                    return $value;
-                }
-            });
-        }
+
+        $repoClass = 'Illuminate\\Config\\Repository';
+        $container->instance('config', new $repoClass($configItems));
+
         $container->instance('files', $filesystem);
 
         // Also bind Container/Application contracts so app() works outside Laravel
