@@ -49,6 +49,21 @@ class BladeBootstrap
         $this->directive('renderTwig', function($expression) {
             return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
         });
+
+        $this->directive('includeLocalized', function ($expression) {
+            return "<?php
+            \$__args = [$expression];
+            \$__template = array_shift(\$__args);
+            \$__data = array_shift(\$__args) ?? [];
+            \$__site = \$currentSite->handle ?? '';
+            echo \$__env->first(
+                array_filter([
+                    \$__site ? \$__site . '.' . \$__template : null,
+                    \$__template
+                ]),
+                \$__data
+            )->render();
+        ?>";});
     }
 
     protected function boot(string $viewsPath, string $cachePath): void

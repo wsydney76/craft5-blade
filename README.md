@@ -46,9 +46,10 @@ Run `ddev craft plugin/install _blade`.
 - Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
 - Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` or `paginate` twig tags.
 - There is no direct equivalent for Twig filters; in most cases PHP functions can be used instead.
+- Does not fully support [Template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization)
 - For now, only used for entry element type. Should work with other element types but not yet tested.
 - IDE support for Blade templates in Craft projects may be limited compared to Twig, e.g. there is no code completion for custom fields.
-- The central Blade.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
+- The central BladeBootstrap.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
 - Not yet reviewed in terms of performance/memory usage.
 
 ## Usage
@@ -207,6 +208,41 @@ public function actionShow()
 * or to a Blade template directly: `blade:blog.show`
 
 In both cases, the current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
+
+### Template Localization
+
+Blade by default can't know anything about Craft's [template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization).
+
+As a workaround, pass an array of possible localized template to Blade where needed:
+
+PHP:
+
+```php
+$currentSite = Craft::$app->getSites()->getCurrentSite();
+return Blade::render(["{$currentSite->handle}.article.index", 'article.index'], [...]);
+```
+
+Blade:
+
+```blade
+@includeFirst(["{$currentSite->handle}.meta", 'meta'], ['entry' => $entry])
+```
+
+Components are not supported.
+
+Some helper functions are available to simplify this, but not fully tested yet:
+
+PHP:
+
+```php
+Blade::renderLocalized('article.show', [...]);
+```
+
+Blade:
+
+```blade
+@includeLocalized('meta', ['entry' => $entry])  
+```
 
 ### Handling pagination
 

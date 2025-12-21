@@ -2,6 +2,8 @@
 
 namespace wsydney76\blade;
 
+use Craft;
+
 /**
  * Static helper to reuse the plugin's Blade instance.
  */
@@ -27,6 +29,14 @@ class Blade
     public static function render(string|array $view, array $data = []): string
     {
         return self::instance()->render($view, $data);
+    }
+
+    public static function renderLocalized(string $view, array $data = []): string
+    {
+        return self::instance()->render([
+            Craft::$app->getSites()->getCurrentSite()->handle . '.' . $view,
+            $view,
+        ], $data);
     }
 
     /**
