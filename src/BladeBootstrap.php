@@ -50,20 +50,10 @@ class BladeBootstrap
             return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
         });
 
-        $this->directive('includeLocalized', function ($expression) {
-            return "<?php
-            \$__args = [$expression];
-            \$__template = array_shift(\$__args);
-            \$__data = array_shift(\$__args) ?? [];
-            \$__site = \$currentSite->handle ?? '';
-            echo \$__env->first(
-                array_filter([
-                    \$__site ? \$__site . '.' . \$__template : null,
-                    \$__template
-                ]),
-                \$__data
-            )->render();
-        ?>";});
+        // includeLocalized directive using extracted compiler method
+        $this->directive('includeLocalized', function($expression) {
+            return $this->compileIncludeLocalized([$expression]);
+        });
     }
 
     protected function boot(string $viewsPath, string $cachePath): void
@@ -194,6 +184,30 @@ class BladeBootstrap
     {
         $extension = new Extension(Craft::$app->getView(), Craft::$app->getView()->twig);
         return $extension->getGlobals();
+    }
 
+    /**
+     * Compiler for the includeLocalized directive.
+     * Builds a PHP snippet that attempts site-specific template first, then falls back.
+     */
+    public function compileIncludeLocalized(array $expression): string
+    {
+        // Wrap raw expression in array brackets to safely parse comma-separated args
+        // $expression will look like: 'meta', ['entry' => $entry]
+        return <<<'PHP'
+<?php
+    $__args = $expression;
+    $__template = array_shift($__args);
+    $__data = array_shift($__args) ?? [];
+    $__site = $currentSite->handle ?? '';
+    echo $__env->first(
+        array_filter([
+            $__site ? $__site . '.' . $__template : null,
+            $__template
+        ]),
+        $__data
+    )->render();
+?>
+PHP;
     }
 }
