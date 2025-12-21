@@ -151,6 +151,14 @@ Blade::render('mytemplate', [
     'entries' => $entries
 ])
 ```
+Accepts an array of views, the first existing one will be used:
+
+```php
+Blade::render(['custom.template', 'fallback.template'], [
+    'data' => $data
+])
+```
+
 
 ### Using Twig from Blade
 

@@ -127,10 +127,15 @@ class BladeBootstrap
 
     /**
      * Render a Blade view.
+     * Accepts either a single view name or an array of view names.
+     * When given an array, renders the first view that exists.
      */
-    public function render(string $view, array $data = []): string
+    public function render(string|array $views, array $data = []): string
     {
-        return $this->viewFactory->make($view, $data)->render();
+        if (is_array($views)) {
+            return $this->viewFactory->first($views, $data)->render();
+        }
+        return $this->viewFactory->make($views, $data)->render();
     }
 
     /**

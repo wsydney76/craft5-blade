@@ -24,7 +24,7 @@ class Blade
     /**
      * Proxy to Blade::render().
      */
-    public static function render(string $view, array $data = []): string
+    public static function render(string|array $view, array $data = []): string
     {
         return self::instance()->render($view, $data);
     }
