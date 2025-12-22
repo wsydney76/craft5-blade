@@ -54,6 +54,14 @@ class BladeBootstrap
         $this->directive('includeLocalized', function($expression) {
             return $this->compileIncludeLocalized([$expression]);
         });
+
+        $this->directive('set', function ($expression) {
+            return "<?php {$expression}; ?>";
+        });
+
+        $this->directive('paginate', function($expression) {
+            return $this->compilePaginate($expression);
+        });
     }
 
     protected function boot(string $viewsPath, string $cachePath): void
@@ -207,6 +215,54 @@ class BladeBootstrap
         ]),
         $__data
     )->render();
+?>
+PHP;
+    }
+
+    /**
+     * Compiler for the paginate directive.
+     * Creates a paginator for an ElementQuery and makes page info and results available.
+     */
+    public function compilePaginate(string $expression): string
+    {
+        return <<<PHP
+<?php
+\$__pgArgs = [{$expression}];
+
+\$__pgQuery = \$__pgArgs[0] ?? null;
+if (!\$__pgQuery) {
+    throw new \\InvalidArgumentException("@paginate requires an ElementQuery as the first argument.");
+}
+
+\$__pgEntriesName = \$__pgArgs[1] ?? 'elements';
+\$__pgInfoName    = \$__pgArgs[2] ?? 'pageInfo';
+\$__pgConfig      = \$__pgArgs[3] ?? [];
+
+if (!is_array(\$__pgConfig)) {
+    \$__pgConfig = (array)\$__pgConfig;
+}
+
+// Default page size to the query limit (Twig-like). Fall back to 100 if no limit set.
+\$__pgPageSize = \$__pgConfig['pageSize'] ?? (\$__pgQuery->limit ?? null);
+if (!\$__pgPageSize) {
+    \$__pgPageSize = 100;
+}
+
+\$__pgQuery->limit(null); // Remove limit for pagination count
+
+\$__pgPaginator = new \\craft\\db\\Paginator(
+    query: \$__pgQuery,
+    config: array_merge(
+        [
+            'pageSize' => (int)\$__pgPageSize,
+            'currentPage' => (int)(\$__pgConfig['currentPage'] ?? Craft::\$app->request->getPageNum()),
+        ],
+        \$__pgConfig
+    )
+);
+
+\${\$__pgEntriesName} = \$__pgPaginator->getPageResults();
+\${\$__pgInfoName} = (new \\craft\\web\\twig\\variables\\Paginate())->create(\$__pgPaginator);
 ?>
 PHP;
     }
