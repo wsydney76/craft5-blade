@@ -261,7 +261,7 @@ if (!\$__pgPageSize) {
     )
 );
 
-\${\$__pgEntriesName} = \$__pgPaginator->getPageResults();
+\${\$__pgEntriesName} = collect(\$__pgPaginator->getPageResults());
 \${\$__pgInfoName} = (new \\craft\\web\\twig\\variables\\Paginate())->create(\$__pgPaginator);
 ?>
 PHP;

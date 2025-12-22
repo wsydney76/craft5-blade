@@ -2,7 +2,7 @@
 
 Enables Laravel Blade templates for Craft CMS, providing a modern templating engine alternative to Twig.
 
-Readme work in progress
+Readme work in progress (and partially AI generated, so...).
 
 ## Requirements
 
@@ -44,7 +44,7 @@ Run `ddev craft plugin/install _blade`.
 ## Limitations
 
 - Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
-- Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` or `paginate` twig tags.
+- Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` twig tag.
 - There is no direct equivalent for Twig filters; in most cases PHP functions can be used instead.
 - Does not fully support [Template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization)
 - For now, only used for entry element type. Should work with other element types but not yet tested.
@@ -246,31 +246,53 @@ Blade:
 
 ### Handling pagination
 
-As there is no direct equivalent to Twig's `paginate` tag, handle pagination in the controller and pass the page results to the Blade template:
+Experimental.
+
+#### PHP: Using Blade::paginate()
+
+Handle pagination in the controller using the `Blade::paginate()` helper method:
 
 ```php
-use craft\db\Paginator;
-use craft\web\twig\variables\Paginate;
 use wsydney76\blade\Blade;
 ...
 
 public function actionIndex()
 {
-    $paginator = new Paginator(
-        query: Entry::find()->section('post'),
-        config: [
-            'pageSize' => 4,
-            'currentPage' => Craft::$app->request->getPageNum(),
-        ]);
-
-    return Blade::render('articles.index', [
-        'entry' => Craft::$app->urlManager->getMatchedElement(),
-        'posts' => $paginator->getPageResults(),
-        'pageInfo' => (new Paginate())->create($paginator),
-    ]);
+    return Blade::render(
+            'posts.index',
+            [
+                'entry' => Craft::$app->urlManager->getMatchedElement(),
+                ...Blade::paginate(Entry::find()->section('post')->limit(10), 'posts', 'pageInfo')
+            ],
+        );
 }
-
 ```
+
+The `Blade::paginate()` method accepts:
+- `$query` - The element query, optionally with limit set
+- `$resultsKey` - The key name for results (default: 'elements')
+- `$pageInfoKey` - The key name for page info (default: 'pageInfo')
+- `$config` - Optional configuration array (pageSize, currentPage, etc.).
+
+An array with the keys specified in `$resultsKey` and `$pageInfoKey` is returned, where
+* `$resultsKey` contains a collection with the paginated results
+* `$pageInfoKey` contains an instance of `craft\web\twig\variables\Paginate`. See [docs](https://craftcms.com/docs/5.x/reference/twig/tags.html#the-pageinfo-variable) for details.
+
+To determine the current page, `Craft::$app->request->getPageNum()` is used, respecting the `pageTrigger` general setting.
+
+To determine the page size, either the limit set on the query or the `pageSize` config is used. If not set, defaults to 100.
+
+#### Blade: Using @paginate() directive
+
+Alternatively, handle pagination directly in the Blade template using the `@paginate()` directive:
+
+```blade
+@paginate(Entry::find()->section('post')->limit(4), 'posts', 'pageInfo')
+```
+
+#### Using pagination in templates
+
+Both methods provide `$posts` with the page results and `$pageInfo` with pagination information:
 
 ```blade
 <ul>
