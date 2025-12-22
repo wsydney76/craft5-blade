@@ -4,7 +4,6 @@ namespace wsydney76\blade;
 
 use Craft;
 use craft\helpers\App;
-use craft\web\twig\Extension;
 use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
@@ -17,12 +16,10 @@ use Illuminate\View\FileViewFinder;
 use wsydney76\blade\support\CraftContainer;
 
 /**
- *  Blade view engine integration for Craft CMS.
+ * Blade view engine integration for Craft CMS.
  *
- *  Provides a simple interface to render Blade templates within Craft,
- *  including support for custom directives and global data sharing.
- * /
- * class Blade
+ * Provides a simple interface to render Blade templates within Craft,
+ * including support for custom directives and global data sharing.
  *
  * CAUTION: This is (mostly) AI generated code and may require adjustments to work properly.
  *
@@ -42,6 +39,12 @@ class BladeBootstrap
             App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache');
     }
 
+    /**
+     * Bootstrap the Blade view engine.
+     *
+     * @param string $viewsPath The path to the views directory
+     * @param string $cachePath The path to the cache directory
+     */
     protected function boot(string $viewsPath, string $cachePath): void
     {
         // Use custom container that provides getNamespace()
@@ -115,6 +118,10 @@ class BladeBootstrap
      * Render a Blade view.
      * Accepts either a single view name or an array of view names.
      * When given an array, renders the first view that exists.
+     *
+     * @param string|array $views The view name or array of view names
+     * @param array $data The data to pass to the view
+     * @return string The rendered view output
      */
     public function render(string|array $views, array $data = []): string
     {
@@ -126,6 +133,9 @@ class BladeBootstrap
 
     /**
      * Share global data with all views.
+     *
+     * @param string $key The variable name
+     * @param mixed $value The value to share
      */
     public function share(string $key, mixed $value): void
     {
@@ -134,6 +144,9 @@ class BladeBootstrap
 
     /**
      * Register a custom Blade directive.
+     *
+     * @param string $name The directive name
+     * @param callable $handler The directive handler callback
      */
     public function directive(string $name, callable $handler): void
     {
@@ -142,6 +155,8 @@ class BladeBootstrap
 
     /**
      * Access the underlying View Factory if needed.
+     *
+     * @return Factory The View Factory instance
      */
     public function factory(): Factory
     {
@@ -150,6 +165,8 @@ class BladeBootstrap
 
     /**
      * Access the Blade compiler if needed.
+     *
+     * @return BladeCompiler The Blade compiler instance
      */
     public function compiler(): BladeCompiler
     {

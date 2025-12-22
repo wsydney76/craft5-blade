@@ -34,6 +34,10 @@ class Blade
         return self::instance()->render($view, $data);
     }
 
+    /**
+     * Render a Blade view using the current site's handle as a prefix.
+     * Falls back to the unprefixed view if the prefixed one doesn't exist.
+     */
     public static function renderLocalized(string $view, array $data = []): string
     {
         return self::instance()->render([
@@ -61,11 +65,11 @@ class Blade
     /**
      * Create a paginator for the given query and return results and page info.
      *
-     * @param mixed $query The element query to paginate
+     * @param ElementQueryInterface $query The element query to paginate
      * @param string $resultsKey The key name for results in the returned array
      * @param string $pageInfoKey The key name for page info in the returned array
      * @param array $config Configuration for the paginator
-     * @return array Returns array with results and pageInfo
+     * @return array<string, mixed> Returns array with results and pageInfo
      */
     public static function paginate(
         ElementQueryInterface $query,

@@ -2,8 +2,14 @@
 
 namespace wsydney76\blade;
 
+/**
+ * Registers and compiles custom Blade directives.
+ */
 class BladeDirectives
 {
+    /**
+     * Register all custom Blade directives.
+     */
     public static function register(): void
     {
         // Render Twig directive
@@ -16,7 +22,7 @@ class BladeDirectives
             return static::compileIncludeLocalized($expression);
         });
 
-        Blade::directive('set', function ($expression) {
+        Blade::directive('set', function($expression) {
             return "<?php {$expression}; ?>";
         });
 
@@ -28,6 +34,9 @@ class BladeDirectives
     /**
      * Compiler for the includeLocalized directive.
      * Builds a PHP snippet that attempts site-specific template first, then falls back.
+     *
+     * @param string $expression The directive expression
+     * @return string The compiled PHP code
      */
     public static function compileIncludeLocalized(string $expression): string
     {
@@ -68,6 +77,9 @@ PHP;
     /**
      * Compiler for the paginate directive.
      * Creates a paginator for an ElementQuery and makes page info and results available.
+     *
+     * @param string $expression The directive expression
+     * @return string The compiled PHP code
      */
     public static function compilePaginate(string $expression): string
     {

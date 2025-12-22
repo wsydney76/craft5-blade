@@ -10,7 +10,10 @@ use wsydney76\blade\Blade;
  */
 class BaseBladeController extends Controller
 {
-    public function actionRender($view)
+    /**
+     * Render a Blade view and return the rendered output.
+     */
+    public function actionRender(string $view): string
     {
         return Blade::render($view);
     }

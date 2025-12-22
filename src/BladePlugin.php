@@ -53,6 +53,14 @@ class BladePlugin extends Plugin
         BladeShared::register();
     }
 
+    /**
+     * Attach plugin event handlers.
+     *
+     * Registers handlers for:
+     * - Template root registration
+     * - Element route resolution (supports blade: and action: prefixes)
+     * - Cache clearing utility integration
+     */
     private function attachEventHandlers(): void
     {
         // Register event handlers here ...
@@ -61,7 +69,7 @@ class BladePlugin extends Plugin
         Event::on(
             View::class,
             View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
-            function(RegisterTemplateRootsEvent $event) {
+            function(RegisterTemplateRootsEvent $event): void {
                 $event->roots['@blade'] = __DIR__ . '/templates';
             }
         );
@@ -69,7 +77,7 @@ class BladePlugin extends Plugin
         Event::on(
             Entry::class,
             Element::EVENT_SET_ROUTE,
-            function(SetElementRouteEvent $event) {
+            function(SetElementRouteEvent $event): void {
 
                 /** @var Entry $entry */
                 $entry = $event->sender;
@@ -105,23 +113,27 @@ class BladePlugin extends Plugin
         Event::on(
             ClearCaches::class,
             ClearCaches::EVENT_REGISTER_CACHE_OPTIONS,
-            function(RegisterCacheOptionsEvent $event) {
+            function(RegisterCacheOptionsEvent $event): void {
                 // Register caches for the Clear Cache Utility
                 $event->options = array_merge(
                     $event->options,
-                    [[
-                        'key' => 'blade',
-                        'label' => 'Blade Template Cache',
-                        'action' => [$this, 'clearCache'],
-                        'info' => 'Clears the compiled Blade template cache files.',
-                    ]]
+                    [
+                        [
+                            'key' => 'blade',
+                            'label' => 'Blade Template Cache',
+                            'action' => [$this, 'clearCache'],
+                            'info' => 'Clears the compiled Blade template cache files.',
+                        ]
+                    ]
                 );
             }
         );
     }
 
 
-
+    /**
+     * Clear the compiled Blade template cache.
+     */
     public function clearCache(): void
     {
         // template caches

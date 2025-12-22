@@ -8,17 +8,22 @@ use Twig\TwigFunction;
 use wsydney76\blade\BladePlugin;
 
 /**
- * Twig extension
+ * Twig extension that provides Blade rendering capabilities within Twig templates.
  */
 class BladeTwigExtension extends AbstractExtension
 {
 
-    public function getFunctions()
+    /**
+     * Register custom Twig functions.
+     *
+     * @return array<TwigFunction> Array of registered Twig functions
+     */
+    public function getFunctions(): array
     {
         // Define custom Twig functions
         // (see https://twig.symfony.com/doc/3.x/advanced.html#functions)
         return [
-            new TwigFunction('renderBlade', function($view, $data = []) {
+            new TwigFunction('renderBlade', function(string $view, array $data = []) {
                $blade = BladePlugin::getInstance()->blade;
                return Template::raw($blade->render($view, $data));
             }),
