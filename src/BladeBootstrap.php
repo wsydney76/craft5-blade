@@ -40,10 +40,6 @@ class BladeBootstrap
         $this->boot(
             App::env('BLADE_VIEWS_PATH') ?: '/var/www/html/resources/views',
             App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache');
-
-        foreach ($this->getGlobals() as $key => $value) {
-            $this->share($key, $value);
-        }
     }
 
     protected function boot(string $viewsPath, string $cachePath): void
@@ -113,11 +109,6 @@ class BladeBootstrap
         $container->instance(Factory::class, $this->viewFactory);
         $container->instance(\Illuminate\Contracts\View\Factory::class, $this->viewFactory);
         $container->instance('view', $this->viewFactory);
-
-        // If you use class-based components, register them here, e.g.:
-        // if (method_exists($this->bladeCompiler, 'component')) {
-        //     $this->bladeCompiler->component('image', \wsydney76\blade\View\Components\Image::class);
-        // }
     }
 
     /**
@@ -163,17 +154,6 @@ class BladeBootstrap
     public function compiler(): BladeCompiler
     {
         return $this->bladeCompiler;
-    }
-
-    /**
-     * Return global variables from Craft's Twig environment.
-     *
-     * @return array
-     */
-    protected function getGlobals(): array
-    {
-        $extension = new Extension(Craft::$app->getView(), Craft::$app->getView()->twig);
-        return $extension->getGlobals();
     }
 
 
