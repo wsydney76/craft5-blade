@@ -52,7 +52,7 @@ class BladeBootstrap
 
         // includeLocalized directive using extracted compiler method
         $this->directive('includeLocalized', function($expression) {
-            return $this->compileIncludeLocalized([$expression]);
+            return $this->compileIncludeLocalized($expression);
         });
 
         $this->directive('set', function ($expression) {
@@ -198,22 +198,37 @@ class BladeBootstrap
      * Compiler for the includeLocalized directive.
      * Builds a PHP snippet that attempts site-specific template first, then falls back.
      */
-    public function compileIncludeLocalized(array $expression): string
+    public function compileIncludeLocalized(string $expression): string
     {
         // Wrap raw expression in array brackets to safely parse comma-separated args
         // $expression will look like: 'meta', ['entry' => $entry]
-        return <<<'PHP'
+        return <<<PHP
 <?php
-    $__args = $expression;
-    $__template = array_shift($__args);
-    $__data = array_shift($__args) ?? [];
-    $__site = $currentSite->handle ?? '';
-    echo $__env->first(
+    \$__args = [{$expression}];
+
+    // Support both call styles: @includeLocalized('meta', [...]) and @includeLocalized(['meta', [...]])
+    if (count(\$__args) === 1 && is_array(\$__args[0])) {
+        \$__args = \$__args[0];
+    }
+
+    \$__template = \$__args[0] ?? null;
+    \$__data = \$__args[1] ?? [];
+
+    // Determine site handle from shared global (if present) or Craft as fallback
+    \$__siteHandle = '';
+    if (isset(\$currentSite) && \$currentSite && (is_object(\$currentSite) || is_array(\$currentSite))) {
+        try { \$__siteHandle = is_object(\$currentSite) ? (\$currentSite->handle ?? '') : (\$currentSite['handle'] ?? ''); } catch (\Throwable \$e) { \$__siteHandle = ''; }
+    }
+    if (!\$__siteHandle) {
+        try { \$__siteHandle = \Craft::\$app->getSites()->getCurrentSite()->handle; } catch (\Throwable \$e) { \$__siteHandle = ''; }
+    }
+
+    echo \$__env->first(
         array_filter([
-            $__site ? $__site . '.' . $__template : null,
-            $__template
+            \$__siteHandle ? \$__siteHandle . '.' . \$__template : null,
+            \$__template
         ]),
-        $__data
+        \$__data
     )->render();
 ?>
 PHP;
