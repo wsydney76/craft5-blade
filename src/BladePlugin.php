@@ -48,6 +48,8 @@ class BladePlugin extends Plugin
             // ...
         });
         Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
+
+        BladeDirectives::register();
     }
 
     private function attachEventHandlers(): void
