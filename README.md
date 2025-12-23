@@ -41,16 +41,40 @@ Run `ddev craft plugin/install _blade`.
 - **Global data sharing** - Access Craft global variables in Blade templates (like `craft`, site name, etc.)
 - **Template inheritance** - Use Blade's powerful layout system with `@extends` and `@section`
 
+
 ## Limitations
 
 - Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
 - Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` twig tag.
-- There is no direct equivalent for Twig filters; in most cases PHP functions can be used instead.
 - Does not fully support [Template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization)
 - For now, only used for entry element type. Should work with other element types but not yet tested.
 - IDE support for Blade templates in Craft projects may be limited compared to Twig, e.g. there is no code completion for custom fields.
 - The central BladeBootstrap.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
 - Not yet reviewed in terms of performance/memory usage.
+- Support for Craft's Twig functions and filters is experimental.
+
+## Helper Functions and Filters
+
+Experimental.
+
+As a first step towards supporting Craft's Twig functions and filters in Blade templates, the Craft Twig extension was thrown into AI, and the functions and filters were converted to standalone PHP functions in `BladeHelpers.php` and `BladeFilters.php`, along with some docs.
+
+Publishing these results here unedited and untested for further evaluation, but no guarantees regarding completeness or correctness.
+
+Blade helper functions are automatically available in your templates and include:
+
+- **Craft CMS functions** - URL helpers, config helpers, element queries, etc.
+- **Twig filters as functions** - Most Craft CMS Twig filters are available as PHP functions for use in Blade (see `BLADE_FILTERS_MAPPING.md` for a complete list)
+- **HTML helpers** - Common HTML output functions
+- **Translation helper** - `__()` function for translation
+
+See  [BLADE_FUNCTIONS_MAPPING.md](ai-generated-docs/BLADE_FUNCTIONS_MAPPING.md) and [HELPER_FILTERS_MAPPING.md](./ai-generated-docs/BLADE_FILTERS_MAPPING.md) for mapping to Craft's core funtionality.
+
+See  [BLADE_FUNCTIONS_QUICK_REFERENCE.md](ai-generated-docs/BLADE_FUNCTIONS_QUICK_REFERENCE.md) and [BLADE_FILTERS_QUICK_REFERENCE](./ai-generated-docs/BLADE_FILTERS_QUICK_REFERENCE.md) for mapping to Craft's core funtionality.
+
+In the current state of this PoC, no further work will be done, accept fixing concrete issues as they arise.
+
+Note that some functions and filters must not be escaped in Blade templates to work correctly, e.g. HTML output functions like `csrfInput()`. Use `{!! ... !!}` instead of `{{ ... }}` for these.
 
 ## Usage
 

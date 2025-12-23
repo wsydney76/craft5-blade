@@ -55,6 +55,12 @@ class BladePlugin extends Plugin
             require_once $helpers;
         }
 
+        // Load Blade filters (Twig Extension getFilters mapped to Blade helpers)
+        $filters = __DIR__ . '/support/BladeFilters.php';
+        if (is_file($filters)) {
+            require_once $filters;
+        }
+
         BladeDirectives::register();
         BladeShared::register();
     }
