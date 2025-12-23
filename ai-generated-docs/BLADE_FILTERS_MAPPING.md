@@ -1,5 +1,7 @@
 # Blade Filters Mapping
 
+__Note: This document is AI generated, unedited, untested. So may be correct or not.__
+
 This document maps each filter function in `BladeFilters.php` to the corresponding Twig filter from `craft\web\twig\Extension`.
 
 ## String Case Conversion Filters

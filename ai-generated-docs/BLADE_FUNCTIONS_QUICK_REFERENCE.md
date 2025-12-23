@@ -1,5 +1,7 @@
 # Blade Functions Quick Reference
 
+__Note: This document is AI generated, unedited, untested. So may be correct or not.__
+
 A quick reference guide for all Blade helper functions available in BladeHelpers.php.
 
 ## URL & Navigation Functions
