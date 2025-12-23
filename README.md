@@ -45,7 +45,7 @@ Run `ddev craft plugin/install _blade`.
 ## Limitations
 
 - Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
-- Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` twig tag.
+- Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` or `nav` twig tags.
 - Does not fully support [Template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization)
 - For now, only used for entry element type. Should work with other element types but not yet tested.
 - IDE support for Blade templates in Craft projects may be limited compared to Twig, e.g. there is no code completion for custom fields.
@@ -75,6 +75,18 @@ See  [BLADE_FUNCTIONS_QUICK_REFERENCE.md](ai-generated-docs/BLADE_FUNCTIONS_QUIC
 In the current state of this PoC, no further work will be done, accept fixing concrete issues as they arise.
 
 Note that some functions and filters must not be escaped in Blade templates to work correctly, e.g. HTML output functions like `csrfInput()`. Use `{!! ... !!}` instead of `{{ ... }}` for these.
+
+Possible next steps:
+
+* Testing...
+* Drop functions that have equivalents in Laravel Blade (e.g. dump, dd).
+* Drop functions that map directly to PHP native functions (e.g. array handling).
+* Drop functions that map directly to Craft helper methods? (e.g. siteUrl() => UrlHelper::siteUrl()).
+* Drop functions that map directly to Craft services? (e.g. entryType() => Craft::$app->getEntries()->getEntryTypeByHandle()).
+* Implement as directives instead of functions in order to avoid escaping issues? (e.g. `@csrfInput` instead of `{!! csrfInput() !!}`).
+* Drop functions that will most likely never be used in a lifetime (e.g. `gql()`).
+* Implement Laravel style helper functions for common services? (e.g. `request()` vs. `Craft::$app->getRequest()`).
+* Check Craft's Twig tags and see if some can be implemented as Blade directives (e.g. `requireAdmin`).
 
 ## Usage
 
