@@ -9,6 +9,7 @@ use craft\helpers\App;
 use craft\helpers\Sequence;
 use craft\models\EntryType;
 use yii\base\InvalidArgumentException;
+use yii\base\InvalidConfigException;
 use yii\db\Expression;
 
 // Provide wrappers as global helper functions for Blade templates.
@@ -319,3 +320,38 @@ if (!function_exists('endBody')) {
         \Craft::$app->getView()->endBody();
     }
 }
+
+/**
+ * Translates the given message.
+ *
+ * @param mixed $message The message to be translated.
+ * @param string|array|null $category the message category.
+ * @param array|string|null $params The parameters that will be used to replace the corresponding placeholders in the message.
+ * @param string|null $language The language code (e.g. `en-US`, `en`). If this is null, the current
+ * [[\yii\base\Application::language|application language]] will be used.
+ * @return string the translated message.
+ */
+if (!function_exists('__')) {
+    function __(mixed $message, mixed $category = null, mixed $params = null, ?string $language = null): string {
+        // The front end site doesn't need to specify the category
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        if (is_array($category)) {
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+            $language = $params;
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+            $params = $category;
+            $category = 'site';
+        } elseif ($category === null) {
+            $category = 'site';
+        }
+
+        if ($params === null) {
+            $params = [];
+        }
+
+        try {
+            return Craft::t($category, (string)$message, $params, $language);
+        } catch (InvalidConfigException) {
+            return $message;
+        }
+    }}
