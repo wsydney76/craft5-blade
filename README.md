@@ -52,6 +52,9 @@ Run `ddev craft plugin/install _blade`.
 - The central BladeBootstrap.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
 - Not yet reviewed in terms of performance/memory usage.
 - Support for Craft's Twig functions and filters is experimental.
+- Does not support class-based components.
+- Does not support Livewire-like reactive components out of the box.
+- Does not support view composers.
 
 ## Helper Functions and Filters
 
