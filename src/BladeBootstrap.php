@@ -129,11 +129,6 @@ class BladeBootstrap
                 Blade::anonymousComponentPath($path, $prefix);
             }
         }
-
-        Blade::anonymousComponentPath(
-            App::parseEnv('@root/test'),
-            'shared'
-        );
     }
 
     /**
