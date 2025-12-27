@@ -36,9 +36,11 @@ class BladeBootstrap
     {
         Craft::info('Initializing Blade view engine', __METHOD__);
 
+        $settings = BladePlugin::getInstance()->getSettings();
+
         $this->boot(
-            App::parseEnv('$BLADE_VIEWS_PATH') ?: App::parseEnv('@root/resources/views'),
-            App::parseEnv('$BLADE_CACHE_PATH') ?: App::parseEnv('@runtime/blade/cache')
+            App::parseEnv($settings->bladeViewsPath),
+            App::parseEnv($settings->bladeCachePath)
         );
     }
 
@@ -118,6 +120,20 @@ class BladeBootstrap
         $container->instance(Factory::class, $this->viewFactory);
         $container->instance(\Illuminate\Contracts\View\Factory::class, $this->viewFactory);
         $container->instance('view', $this->viewFactory);
+
+        // Register anonymous component paths from settings
+        foreach (BladePlugin::getInstance()->getSettings()->bladeComponentPaths as $componentPath) {
+            $path = App::parseEnv($componentPath['path'] ?? '');
+            $prefix = $componentPath['prefix'] ?? null;
+            if ($path) {
+                Blade::anonymousComponentPath($path, $prefix);
+            }
+        }
+
+        Blade::anonymousComponentPath(
+            App::parseEnv('@root/test'),
+            'shared'
+        );
     }
 
     /**

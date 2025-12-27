@@ -5,6 +5,7 @@ namespace wsydney76\blade;
 use Craft;
 use craft\base\Element;
 use craft\base\Event;
+use craft\base\Model;
 use craft\base\Plugin;
 use craft\elements\Entry;
 use craft\events\RegisterCacheOptionsEvent;
@@ -14,11 +15,9 @@ use craft\helpers\App;
 use craft\helpers\FileHelper;
 use craft\utilities\ClearCaches;
 use craft\web\View;
-use http\Exception\InvalidArgumentException;
+use wsydney76\blade\models\Settings;
 use wsydney76\blade\web\twig\BladeTwigExtension;
 use yii\base\ErrorException;
-use function str_ends_with;
-use function str_replace;
 
 /**
  * Blade plugin
@@ -28,6 +27,8 @@ use function str_replace;
 class BladePlugin extends Plugin
 {
     public string $schemaVersion = '1.0.0';
+
+    public bool $hasCpSection = true;
 
     public static function config(): array
     {
@@ -127,7 +128,7 @@ class BladePlugin extends Plugin
                 }
 
                 if (str_ends_with($template, '.blade.php')) {
-                    $subdir = App::env('BLADE_VIEWS_SUBDIR');
+                    $subdir = $this->getSettings()->bladeViewsSubdir;
                     if ($subdir) {
                         if (!str_ends_with($subdir, '/')) {
                             $subdir .= '/';
@@ -166,6 +167,12 @@ class BladePlugin extends Plugin
                 );
             }
         );
+    }
+
+
+    protected function createSettingsModel(): ?Model
+    {
+        return new Settings();
     }
 
 
