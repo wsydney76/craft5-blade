@@ -92,9 +92,9 @@ Possible next steps:
 
 ### Basic Setup
 
-Create your Blade templates in the `resources/views` directory (or set the `BLADE_VIEWS_PATH` environment variable).
+Create your Blade templates in the `resources/views` directory (or the path configured in `config/_blade.php`).
 
-Template cache is stored in `storage/runtime/blade/cache` (or set `BLADE_CACHE_PATH` environment variable).
+Template cache is stored in `storage/runtime/blade/cache` (or the path configured in `config/_blade.php`).
 
 ### Creating Blade Templates
 
@@ -241,7 +241,7 @@ public function actionShow()
     }
 ```
 
-* or to a Blade template directly: `blade:blog.show` (by prefix) or `blog/show.blade.php` (by file path/extension, relative to BLADE_VIEWS_PATH).
+* or to a Blade template directly: `blade:blog.show` (by prefix) or `blog/show.blade.php` (by file path/extension, relative to bladeViewsPath setting).
 
 In both cases, the current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
 
@@ -455,32 +455,30 @@ Or via Control Panel: Utilities → Caches → Blade Template Cache
 
 ## Configuration
 
-### Environment Variables
+If you want to customize Blade settings, create a config file at `config/_blade.php`.
 
-Configure paths via environment variables:
+```php
+<?php
 
+use craft\helpers\App;
+
+return [
+    'bladeViewsPath' => App::env('BLADE_VIEWS_PATH') ?? '@templates/_blade',
+    'bladeCachePath' => App::env('BLADE_CACHE_PATH') ?? '@runtime/blade/cache',
+    'bladeComponentPaths' => [
+        ['path' => '@templates/_shared', 'prefix' => 'shared'],
+    ],
+];
 ```
-BLADE_VIEWS_PATH=/path/to/views
-BLADE_CACHE_PATH=/path/to/cache
-```
 
-The values can use Craft aliases, e.g. `@root/blade`.
+where:
 
-`BLADE_CACHE_PATH` must be writable by Craft.
+* `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
+* `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
+* `bladeComponentPaths` - Additional component paths with (optional) prefixes, defaults to empty array. In this example, you could use `<x-shared:mycomponent />` to reference a component in `@templates/_shared/mycomponent.blade.php`.
 
-You may need to update your IDE settings to recognize the Blade views path for code completion.
+Values support Craft aliases.
 
-Defaults:
-- `BLADE_VIEWS_PATH`: `@root/resources/views`
-- `BLADE_CACHE_PATH`: `@runtime/blade/cache` 
-
-Special case: 
-
-If you want to live Blade views in a directory inside Twig template root set `BLADE_VIEWS_PATH` to that directory, e.g.  `@templates/_views`.
-
-You then can set a `BLADE_VIEWS_SUBDIR` environment variable to specify the subdirectory inside that path, e.g. `_views`.
-
-The only purpose of this is that it allows you to use autosuggest in section settings when specifying Blade templates, e.g. `_views`.
 
 ## Reactive components
 

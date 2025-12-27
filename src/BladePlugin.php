@@ -128,17 +128,6 @@ class BladePlugin extends Plugin
                 }
 
                 if (str_ends_with($template, '.blade.php')) {
-                    $subdir = $this->getSettings()->bladeViewsSubdir;
-                    if ($subdir) {
-                        if (!str_ends_with($subdir, '/')) {
-                            $subdir .= '/';
-                        }
-                        if (str_starts_with($template, $subdir)) {
-                            // remove subdir from template path
-                            $template = substr($template, strlen($subdir));
-                        }
-                    }
-
                     $view = str_replace('.blade.php', '', $template);
                     $view = str_replace('/', '.', $view);
                     Craft::$app->urlManager->setRouteParams([
