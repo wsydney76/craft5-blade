@@ -55,6 +55,14 @@ class Blade
     }
 
     /**
+     * Register a custom Blade conditional (Blade::if equivalent).
+     */
+    public static function if(string $name, callable $handler): void
+    {
+        self::instance()->if($name, $handler);
+    }
+
+    /**
      * Proxy to Blade::share().
      */
     public static function share(string $key, mixed $value): void

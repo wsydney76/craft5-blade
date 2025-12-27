@@ -10,6 +10,8 @@ use wsydney76\blade\Blade;
  */
 class BaseBladeController extends Controller
 {
+    protected array|bool|int $allowAnonymous = true;
+
     /**
      * Render a Blade view and return the rendered output.
      */

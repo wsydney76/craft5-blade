@@ -14,7 +14,11 @@ use craft\helpers\App;
 use craft\helpers\FileHelper;
 use craft\utilities\ClearCaches;
 use craft\web\View;
+use http\Exception\InvalidArgumentException;
 use wsydney76\blade\web\twig\BladeTwigExtension;
+use yii\base\ErrorException;
+use function str_ends_with;
+use function str_replace;
 
 /**
  * Blade plugin
@@ -63,6 +67,7 @@ class BladePlugin extends Plugin
 
         BladeDirectives::register();
         BladeShared::register();
+        BladeIfs::register();
     }
 
     /**
@@ -120,6 +125,27 @@ class BladePlugin extends Plugin
                     $event->route = "_blade/base-blade/render";
                     $event->handled = true;
                 }
+
+                if (str_ends_with($template, '.blade.php')) {
+                    $subdir = App::env('BLADE_VIEWS_SUBDIR');
+                    if ($subdir) {
+                        if (!str_ends_with($subdir, '/')) {
+                            $subdir .= '/';
+                        }
+                        if (str_starts_with($template, $subdir)) {
+                            // remove subdir from template path
+                            $template = substr($template, strlen($subdir));
+                        }
+                    }
+
+                    $view = str_replace('.blade.php', '', $template);
+                    $view = str_replace('/', '.', $view);
+                    Craft::$app->urlManager->setRouteParams([
+                        'view' => $view,
+                    ]);
+                    $event->route = "_blade/base-blade/render";
+                    $event->handled = true;
+                }
             });
 
         Event::on(
@@ -145,11 +171,16 @@ class BladePlugin extends Plugin
 
     /**
      * Clear the compiled Blade template cache.
+     *
+     * @throws ErrorException
      */
     public function clearCache(): void
     {
         // template caches
-        $dir = App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache';
+        $dir = App::parseEnv('$BLADE_CACHE_PATH') ?: App::parseEnv('@runtime/blade/cache');
+        if (!is_dir($dir)) {
+            return;
+        }
         FileHelper::clearDirectory($dir);
     }
 }

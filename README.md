@@ -241,7 +241,7 @@ public function actionShow()
     }
 ```
 
-* or to a Blade template directly: `blade:blog.show`
+* or to a Blade template directly: `blade:blog.show` (by prefix) or `blog/show.blade.php` (by file path/extension, relative to BLADE_VIEWS_PATH).
 
 In both cases, the current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
 
@@ -359,6 +359,8 @@ All [Craft global variables](https://craftcms.com/docs/5.x/reference/twig/global
 <p>Site URL: {{ $siteUrl }}</p>
 <p>User name: {{ $currentUser->name }}</p>
 <p>Craft variable: {{ $craft->app->language }}</p>
+
+@php($entries = $craft->entries()->section('*')->all())
 ```
 
 ## Custom Directives
@@ -369,6 +371,12 @@ Define custom Blade directives in your plugin or module:
 Blade::directive('datetime', function($expression) {
     return "<?php echo ($expression)->format('Y-m-d H:i'); ?>";
 })
+```
+
+Usage in Blade templates:
+
+```blade
+<p>Published at: @datetime($entry->postDate)</p>
 ```
 
 ## Shared Data
@@ -388,6 +396,31 @@ Then access it in any Blade template:
 ```
 
 This mimics Craft's `preloadSingles` feature for Twig templates. Kind of.
+
+## Custom If Statements
+
+Define custom Blade If statements in your plugin or module:
+
+```php
+Blade::if('dev', function (): bool {
+    return Craft::$app->getConfig()->getGeneral()->devMode;
+});
+```
+
+Usage in Blade templates:
+
+```blade
+@dev  
+    <p>Running in dev mode</p>
+@else   
+    <p>Running in production mode</p>
+@endadmin
+
+
+@unlessdev
+   <p>Running in production mode</p>
+@enddev
+```
 
 ## Common Blade Settings
 
@@ -431,9 +464,23 @@ BLADE_VIEWS_PATH=/path/to/views
 BLADE_CACHE_PATH=/path/to/cache
 ```
 
-Defaults, assuming DDEV setup:
-- `BLADE_VIEWS_PATH`: `/var/www/html/resources/views`
-- `BLADE_CACHE_PATH`: `/var/www/html/storage/runtime/blade/cache`
+The values can use Craft aliases, e.g. `@root/blade`.
+
+`BLADE_CACHE_PATH` must be writable by Craft.
+
+You may need to update your IDE settings to recognize the Blade views path for code completion.
+
+Defaults:
+- `BLADE_VIEWS_PATH`: `@root/resources/views`
+- `BLADE_CACHE_PATH`: `@runtime/blade/cache` 
+
+Special case: 
+
+If you want to live Blade views in a directory inside Twig template root set `BLADE_VIEWS_PATH` to that directory, e.g.  `@templates/_views`.
+
+You then can set a `BLADE_VIEWS_SUBDIR` environment variable to specify the subdirectory inside that path, e.g. `_views`.
+
+The only purpose of this is that it allows you to use autosuggest in section settings when specifying Blade templates, e.g. `_views`.
 
 ## Reactive components
 

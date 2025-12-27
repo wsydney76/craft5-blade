@@ -7,6 +7,8 @@ use craft\helpers\App;
 use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\View\Engines\CompilerEngine;
 use Illuminate\View\Engines\EngineResolver;
@@ -35,8 +37,9 @@ class BladeBootstrap
         Craft::info('Initializing Blade view engine', __METHOD__);
 
         $this->boot(
-            App::env('BLADE_VIEWS_PATH') ?: '/var/www/html/resources/views',
-            App::env('BLADE_CACHE_PATH') ?: '/var/www/html/storage/runtime/blade/cache');
+            App::parseEnv('$BLADE_VIEWS_PATH') ?: App::parseEnv('@root/resources/views'),
+            App::parseEnv('$BLADE_CACHE_PATH') ?: App::parseEnv('@runtime/blade/cache')
+        );
     }
 
     /**
@@ -50,6 +53,9 @@ class BladeBootstrap
         // Use custom container that provides getNamespace()
         $container = new CraftContainer();
         Container::setInstance($container);
+
+        // Ensure Laravel facades (including Illuminate\Support\Facades\Blade) use this container
+        Facade::setFacadeApplication($container);
 
         $filesystem = new Filesystem();
         $events = new Dispatcher($container);
@@ -151,6 +157,17 @@ class BladeBootstrap
     public function directive(string $name, callable $handler): void
     {
         $this->bladeCompiler->directive($name, $handler);
+    }
+
+    /**
+     * Register a custom Blade conditional (Blade::if equivalent).
+     *
+     * @param string $name The conditional name used in templates (e.g., @mycond)
+     * @param callable $handler A callback that returns truthy/falsey
+     */
+    public function if(string $name, callable $handler): void
+    {
+        $this->bladeCompiler->if($name, $handler);
     }
 
     /**

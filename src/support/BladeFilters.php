@@ -181,7 +181,7 @@ if (!function_exists('without')) {
 }
 if (!function_exists('withoutKey')) {
     function withoutKey(array $array, mixed $value): array {
-        return array_filter($array, fn($v) => $v !== $value);
+        return array_filter($array, fn($v, $k) => $k !== $value, ARRAY_FILTER_USE_BOTH);
     }
 }
 if (!function_exists('indexOf')) {
