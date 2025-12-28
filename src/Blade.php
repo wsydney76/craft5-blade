@@ -71,6 +71,14 @@ class Blade
     }
 
     /**
+     * Register a custom stringable handler for a class.
+     */
+    public static function stringable(string $class, callable $handler): void
+    {
+        self::instance()->stringable($class, $handler);
+    }
+
+    /**
      * Create a paginator for the given query and return results and page info.
      *
      * @param ElementQueryInterface $query The element query to paginate

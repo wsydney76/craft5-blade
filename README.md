@@ -437,6 +437,44 @@ Usage in Blade templates:
 @enddev
 ```
 
+## Custom Echo Handlers
+
+Register custom stringable handlers to automatically format objects that don't implement a `__toString` method:
+
+```php
+Blade::stringable(\DateTime::class, function($dateTime) {
+    return $dateTime->format('Y-m-d H:i');
+});
+```
+
+Usage in Blade templates:
+
+```blade
+<p>Posted: {{ $entry->postDate }}</p>
+<!-- Outputs: Posted: 2025-12-28 14:30 -->
+```
+
+Multiple stringables can be registered for different classes:
+
+```php
+// Format DateTime objects
+Blade::stringable(\DateTime::class, function($dateTime) {
+    return $dateTime->format('Y-m-d H:i');
+});
+
+// Format Money objects (example)
+Blade::stringable(Money\Money::class, function($money) {
+    if ($money === null) {
+        return null;
+    }
+    return \craft\helpers\MoneyHelper::toString($money);
+});
+```
+
+Note that you can't pass additional parameters to the stringable handler. If you need more control, consider using a custom Blade directive or helper function instead.
+
+```php
+
 ## Common Blade Settings
 
 If multiple controllers are used, extend from a base controller to set common Blade settings:
@@ -449,6 +487,11 @@ public function beforeAction($action): bool
       
         // Share global settings entry
         Blade::share('settings', Entry::find()->section('settings')->one());
+
+        // Register stringable for DateTime objects
+        Blade::stringable(\DateTime::class, function($dateTime) {
+            return $dateTime->format('Y-m-d H:i');
+        });
 
         // Datetime directive
         Blade::directive('datetime', function($expression) {

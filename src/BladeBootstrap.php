@@ -182,6 +182,17 @@ class BladeBootstrap
     }
 
     /**
+     * Register a custom stringable handler for a class.
+     *
+     * @param string $class The class name to register the stringable for
+     * @param callable $handler The callback that converts the object to a string
+     */
+    public function stringable(string $class, callable $handler): void
+    {
+        $this->bladeCompiler->stringable($class, $handler);
+    }
+
+    /**
      * Access the underlying View Factory if needed.
      *
      * @return Factory The View Factory instance

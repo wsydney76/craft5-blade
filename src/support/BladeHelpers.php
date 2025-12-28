@@ -15,6 +15,22 @@ use yii\db\Expression;
 // Provide wrappers as global helper functions for Blade templates.
 // Skip ones that duplicate native PHP functions (ceil, floor, get_class, array_combine).
 
+if (!function_exists('app')) {
+    /**
+     * Get the available container instance.
+     * This helper is required by Laravel Blade's stringable feature.
+     */
+    function app(?string $abstract = null, array $parameters = []): mixed
+    {
+        $container = \Illuminate\Container\Container::getInstance();
+        if (is_null($abstract)) {
+            return $container;
+        }
+
+        return $container->make($abstract, $parameters);
+    }
+}
+
 if (!function_exists('actionUrl')) {
     function actionUrl(string $path = '', array $params = [], ?string $scheme = null): string
     {
