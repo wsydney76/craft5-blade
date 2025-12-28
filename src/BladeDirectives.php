@@ -102,27 +102,15 @@ if (!is_array($__pgConfig)) {
     $__pgConfig = (array)$__pgConfig;
 }
 
-// Default page size to the query limit (Twig-like). Fall back to 100 if no limit set.
-$__pgPageSize = $__pgConfig['pageSize'] ?? ($__pgQuery->limit ?? null);
-if (!$__pgPageSize) {
-    $__pgPageSize = 100;
-}
-
-$__pgQuery->limit(null); // Remove limit for pagination count
-
-$__pgPaginator = new \craft\db\Paginator(
-    query: $__pgQuery,
-    config: array_merge(
-        [
-            'pageSize' => (int)$__pgPageSize,
-            'currentPage' => (int)($__pgConfig['currentPage'] ?? Craft::$app->request->getPageNum()),
-        ],
-        $__pgConfig
-    )
+$__pgResult = \wsydney76\blade\Blade::paginate(
+    $__pgQuery,
+    $__pgEntriesName,
+    $__pgInfoName,
+    $__pgConfig
 );
 
-${$__pgEntriesName} = collect($__pgPaginator->getPageResults());
-${$__pgInfoName} = (new \craft\web\twig\variables\Paginate())->create($__pgPaginator);
+${$__pgEntriesName} = $__pgResult[$__pgEntriesName] ?? null;
+${$__pgInfoName} = $__pgResult[$__pgInfoName] ?? null;
 ?>
 PHP;
 
