@@ -332,7 +332,7 @@ if (!function_exists('timestamp')) {
 }
 // HTML/Markup filters
 if (!function_exists('address')) {
-    function address(?Address $address, array $options = []): string {
+    function address(?\craft\elements\Address $address, array $options = []): string {
         if ($address === null) {
             return '';
         }
