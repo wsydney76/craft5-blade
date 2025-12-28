@@ -473,7 +473,6 @@ Blade::stringable(Money\Money::class, function($money) {
 
 Note that you can't pass additional parameters to the stringable handler. If you need more control, consider using a custom Blade directive or helper function instead.
 
-```php
 
 ## Common Blade Settings
 
