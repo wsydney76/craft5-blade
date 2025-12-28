@@ -29,6 +29,11 @@ class BladeDirectives
         Blade::directive('paginate', function($expression) {
             return static::compilePaginate($expression);
         });
+
+        // markdown directive for combining markdown and purify
+        Blade::directive('markdown', function($expression) {
+            return static::compileMarkdown($expression);
+        });
     }
 
     /**
@@ -111,6 +116,30 @@ $__pgResult = \wsydney76\blade\Blade::paginate(
 
 ${$__pgEntriesName} = $__pgResult[$__pgEntriesName] ?? null;
 ${$__pgInfoName} = $__pgResult[$__pgInfoName] ?? null;
+?>
+PHP;
+
+        return \sprintf($template, $expression);
+    }
+
+    /**
+     * Compiler for the markdown directive.
+     * Combines markdown processing with HTML purification.
+     * Usage: @markdown($text, $purifierConfig)
+     *
+     * @param string $expression The directive expression
+     * @return string The compiled PHP code
+     */
+    public static function compileMarkdown(string $expression): string
+    {
+        $template = <<<'PHP'
+<?php
+$__mdArgs = [%s];
+
+$__mdText = $__mdArgs[0] ?? '';
+$__mdConfig = $__mdArgs[1] ?? null;
+
+echo purify(markdown($__mdText), $__mdConfig);
 ?>
 PHP;
 
