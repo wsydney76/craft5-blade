@@ -54,17 +54,6 @@ class BladePlugin extends Plugin
         });
         Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
 
-        // Load global Blade helper functions (Twig Extension getFunctions mapped to Blade helpers)
-        $helpers = __DIR__ . '/support/BladeHelpers.php';
-        if (is_file($helpers)) {
-            require_once $helpers;
-        }
-
-        // Load Blade filters (Twig Extension getFilters mapped to Blade helpers)
-        $filters = __DIR__ . '/support/BladeFilters.php';
-        if (is_file($filters)) {
-            require_once $filters;
-        }
 
         BladeDirectives::register();
         BladeShared::register();
