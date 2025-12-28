@@ -2,6 +2,7 @@
 
 use craft\helpers\ArrayHelper;
 use craft\helpers\DateTimeHelper;
+use craft\helpers\Db;
 use craft\helpers\Html;
 use craft\helpers\Json;
 use craft\helpers\StringHelper;
@@ -440,7 +441,7 @@ if (!function_exists('encenc')) {
 }
 if (!function_exists('literal')) {
     function literal(mixed $string): string {
-        return (string)$string;
+       return Db::escapeParam((string)$string);
     }
 }
 // Complex filters that work with closures/callables
