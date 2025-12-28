@@ -508,7 +508,9 @@ Remove cached Blade templates via console command:
 php craft clear-caches/blade
 ```
 
-Or via Control Panel: Utilities → Caches → Blade Template Cache
+Or via Control Panel: Utilities → Caches → Blade Template Cache.
+
+The template cache has to be cleared when Blade custom directives are changed.
 
 ## Configuration
 
