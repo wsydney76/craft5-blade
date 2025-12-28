@@ -16,26 +16,30 @@ use yii\db\Expression;
 // Skip ones that duplicate native PHP functions (ceil, floor, get_class, array_combine).
 
 if (!function_exists('actionUrl')) {
-    function actionUrl(string $path = '', array $params = [], ?string $scheme = null): string {
+    function actionUrl(string $path = '', array $params = [], ?string $scheme = null): string
+    {
         return UrlHelper::actionUrl($path, $params, $scheme);
     }
 }
 
 if (!function_exists('alias')) {
-    function alias(string $alias): string {
+    function alias(string $alias): string
+    {
         return \Craft::getAlias($alias);
     }
 }
 
 // clone is a reserved keyword; provide clone_var instead
 if (!function_exists('clone_var')) {
-    function clone_var(mixed $var): mixed {
+    function clone_var(mixed $var): mixed
+    {
         return clone $var;
     }
 }
 
 if (!function_exists('collect')) {
-    function collect(mixed $var): \Illuminate\Support\Collection {
+    function collect(mixed $var): \Illuminate\Support\Collection
+    {
         $collection = \Illuminate\Support\Collection::make($var);
         // If all items are elements, return ElementCollection
         if ($collection->isNotEmpty() && $collection->doesntContain(fn($item) => !$item instanceof ElementInterface)) {
@@ -46,25 +50,29 @@ if (!function_exists('collect')) {
 }
 
 if (!function_exists('configure')) {
-    function configure(object $object, array $properties): object {
+    function configure(object $object, array $properties): object
+    {
         return \Craft::configure($object, $properties);
     }
 }
 
 if (!function_exists('cpUrl')) {
-    function cpUrl(string $path = '', array $params = [], ?string $scheme = null): string {
+    function cpUrl(string $path = '', array $params = [], ?string $scheme = null): string
+    {
         return UrlHelper::cpUrl($path, $params, $scheme);
     }
 }
 
 if (!function_exists('create')) {
-    function create(array|string $config): object {
+    function create(array|string $config): object
+    {
         return (object)\Craft::createObject($config);
     }
 }
 
 if (!function_exists('dataUrl')) {
-    function dataUrl(Asset|string $file, ?string $mimeType = null): string {
+    function dataUrl(Asset|string $file, ?string $mimeType = null): string
+    {
         try {
             if ($file instanceof Asset) {
                 return $file->getDataUrl();
@@ -78,7 +86,8 @@ if (!function_exists('dataUrl')) {
 }
 
 if (!function_exists('dump')) {
-    function dump(...$vars): string {
+    function dump(...$vars): string
+    {
         if (!$vars) {
             return '';
         }
@@ -93,13 +102,15 @@ if (!function_exists('dump')) {
 }
 
 if (!function_exists('encodeUrl')) {
-    function encodeUrl(string $url): string {
+    function encodeUrl(string $url): string
+    {
         return UrlHelper::encodeUrl($url);
     }
 }
 
 if (!function_exists('entryType')) {
-    function entryType(string $handle): EntryType {
+    function entryType(string $handle): EntryType
+    {
         $entryType = \Craft::$app->getEntries()->getEntryTypeByHandle($handle);
         if ($entryType === null) {
             throw new InvalidArgumentException("Invalid entry type handle: $handle");
@@ -109,62 +120,72 @@ if (!function_exists('entryType')) {
 }
 
 if (!function_exists('expression')) {
-    function expression(mixed $expression, array $params = [], array $config = []): Expression {
+    function expression(mixed $expression, array $params = [], array $config = []): Expression
+    {
         return new Expression($expression, $params, $config);
     }
 }
 
 if (!function_exists('fieldValueSql')) {
-    function fieldValueSql(\craft\base\FieldLayoutProviderInterface $provider, string $fieldHandle, ?string $key = null): ?string {
+    function fieldValueSql(\craft\base\FieldLayoutProviderInterface $provider, string $fieldHandle, ?string $key = null): ?string
+    {
         return $provider->getFieldLayout()->getFieldByHandle($fieldHandle)->getValueSql($key);
     }
 }
 
 if (!function_exists('getenv_craft')) {
-    function getenv_craft(string $name, mixed $default = null): mixed {
+    function getenv_craft(string $name, mixed $default = null): mixed
+    {
         return App::env($name) ?? $default;
     }
 }
 
 if (!function_exists('gql')) {
-    function gql(string $query, ?array $variables = null, ?string $operationName = null): array {
+    function gql(string $query, ?array $variables = null, ?string $operationName = null): array
+    {
         $schema = \craft\helpers\Gql::createFullAccessSchema();
         return \Craft::$app->getGql()->executeQuery($schema, $query, $variables, $operationName);
     }
 }
 
 if (!function_exists('parseEnv')) {
-    function parseEnv(string $value): string {
+    function parseEnv(string $value): string
+    {
         return App::parseEnv($value);
     }
 }
 
 if (!function_exists('parseBooleanEnv')) {
-    function parseBooleanEnv(string $value): bool {
+    function parseBooleanEnv(string $value): bool
+    {
         return App::parseBooleanEnv($value);
     }
 }
 
 if (!function_exists('plugin')) {
-    function plugin(string $handle): ?\craft\base\PluginInterface {
+    function plugin(string $handle): ?\craft\base\PluginInterface
+    {
         return \Craft::$app->getPlugins()->getPlugin($handle);
     }
 }
 
 if (!function_exists('raw')) {
-    function raw(string $string): string {
+    function raw(string $string): string
+    {
         return (string)TemplateHelper::raw($string);
     }
 }
 
 if (!function_exists('renderObjectTemplate')) {
-    function renderObjectTemplate(string $template, mixed $object): string {
+    function renderObjectTemplate(string $template, mixed $object): string
+    {
         return \Craft::$app->getView()->renderObjectTemplate($template, $object);
     }
 }
 
 if (!function_exists('seq')) {
-    function seq(string $name, ?int $length = null, bool $next = true): int|string {
+    function seq(string $name, ?int $length = null, bool $next = true): int|string
+    {
         if ($next) {
             return Sequence::next($name, $length);
         }
@@ -173,7 +194,8 @@ if (!function_exists('seq')) {
 }
 
 if (!function_exists('shuffle_arr')) {
-    function shuffle_arr(iterable $arr): array {
+    function shuffle_arr(iterable $arr): array
+    {
         if ($arr instanceof \Traversable) {
             $arr = iterator_to_array($arr, false);
         } else {
@@ -185,97 +207,115 @@ if (!function_exists('shuffle_arr')) {
 }
 
 if (!function_exists('siteUrl')) {
-    function siteUrl(string $path = '', array $params = [], ?string $scheme = null, ?string $siteId = null): string {
+    function siteUrl(string $path = '', array $params = [], ?string $scheme = null, ?string $siteId = null): string
+    {
         return UrlHelper::siteUrl($path, $params, $scheme, $siteId);
     }
 }
 
 if (!function_exists('url')) {
-    function url(string $path = '', array $params = [], ?string $scheme = null): string {
+    function url(string $path = '', array $params = [], ?string $scheme = null): string
+    {
         return UrlHelper::url($path, $params, $scheme);
     }
 }
 
 // Element authorization wrappers
 if (!function_exists('canCreateDrafts')) {
-    function canCreateDrafts(ElementInterface $element, ?\craft\elements\User $user = null): bool {
+    function canCreateDrafts(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    {
         return \Craft::$app->getElements()->canCreateDrafts($element, $user);
     }
 }
 if (!function_exists('canDelete')) {
-    function canDelete(ElementInterface $element, ?\craft\elements\User $user = null): bool {
+    function canDelete(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    {
         return \Craft::$app->getElements()->canDelete($element, $user);
     }
 }
 if (!function_exists('canDeleteForSite')) {
-    function canDeleteForSite(ElementInterface $element, ?\craft\elements\User $user = null): bool {
+    function canDeleteForSite(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    {
         return \Craft::$app->getElements()->canDeleteForSite($element, $user);
     }
 }
 if (!function_exists('canDuplicate')) {
-    function canDuplicate(ElementInterface $element, ?\craft\elements\User $user = null): bool {
+    function canDuplicate(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    {
         return \Craft::$app->getElements()->canDuplicate($element, $user);
     }
 }
 if (!function_exists('canSave')) {
-    function canSave(ElementInterface $element, ?\craft\elements\User $user = null): bool {
+    function canSave(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    {
         return \Craft::$app->getElements()->canSave($element, $user);
     }
 }
 if (!function_exists('canView')) {
-    function canView(ElementInterface $element, ?\craft\elements\User $user = null): bool {
+    function canView(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    {
         return \Craft::$app->getElements()->canView($element, $user);
     }
 }
 
 // HTML generation wrappers
 if (!function_exists('actionInput')) {
-    function actionInput(string $action, array $params = []): string {
+    function actionInput(string $action, array $params = []): string
+    {
         return Html::actionInput($action, $params);
     }
 }
 if (!function_exists('attr')) {
-    function attr(array $attributes): string {
+    function attr(array $attributes): string
+    {
         return Html::renderTagAttributes($attributes);
     }
 }
 if (!function_exists('csrfInput')) {
-    function csrfInput(): string {
+    function csrfInput(): string
+    {
         return Html::csrfInput();
     }
 }
 if (!function_exists('failMessageInput')) {
-    function failMessageInput(string $message = null): string {
+    function failMessageInput(string $message = null): string
+    {
         return Html::failMessageInput($message);
     }
 }
 if (!function_exists('hiddenInput')) {
-    function hiddenInput(string $name, string $value = null, array $options = []): string {
+    function hiddenInput(string $name, string $value = null, array $options = []): string
+    {
         return Html::hiddenInput($name, $value, $options);
     }
 }
 if (!function_exists('input')) {
-    function input(string $type, string $name = null, string $value = null, array $options = []): string {
+    function input(string $type, string $name = null, string $value = null, array $options = []): string
+    {
         return Html::input($type, $name, $value, $options);
     }
 }
 if (!function_exists('ol')) {
-    function ol(array $items, array $attributes = []): string {
+    function ol(array $items, array $attributes = []): string
+    {
         return Html::ol($items, $attributes);
     }
 }
 if (!function_exists('redirectInput')) {
-    function redirectInput(string $url): string {
+    function redirectInput(string $url): string
+    {
         return Html::redirectInput($url);
     }
 }
 if (!function_exists('successMessageInput')) {
-    function successMessageInput(string $message = null): string {
+    function successMessageInput(string $message = null): string
+    {
         return Html::successMessageInput($message);
     }
 }
 if (!function_exists('svg')) {
-    function svg(Asset|string $svg, ?bool $sanitize = null, ?bool $namespace = null, ?string $class = null): string {
+    function svg(Asset|string $svg, ?bool $sanitize = null, ?bool $namespace = null, ?string $class = null): string
+    {
         $markup = Html::svg($svg, $sanitize, $namespace);
         if ($class !== null) {
             \Craft::$app->getDeprecator()->log('svg()-class', 'The `class` argument of the `svg()` helper has been deprecated. Use attr filter/helpers instead.');
@@ -289,7 +329,8 @@ if (!function_exists('svg')) {
     }
 }
 if (!function_exists('tag')) {
-    function tag(string $type, array $attributes = []): string {
+    function tag(string $type, array $attributes = []): string
+    {
         $html = \craft\helpers\ArrayHelper::remove($attributes, 'html', '');
         $text = \craft\helpers\ArrayHelper::remove($attributes, 'text');
         if ($text !== null) {
@@ -299,24 +340,28 @@ if (!function_exists('tag')) {
     }
 }
 if (!function_exists('ul')) {
-    function ul(array $items, array $attributes = []): string {
+    function ul(array $items, array $attributes = []): string
+    {
         return Html::ul($items, $attributes);
     }
 }
 
 // DOM event wrappers (no-op if not used in Blade context)
 if (!function_exists('head')) {
-    function head(): void {
+    function head(): void
+    {
         \Craft::$app->getView()->head();
     }
 }
 if (!function_exists('beginBody')) {
-    function beginBody(): void {
+    function beginBody(): void
+    {
         \Craft::$app->getView()->beginBody();
     }
 }
 if (!function_exists('endBody')) {
-    function endBody(): void {
+    function endBody(): void
+    {
         \Craft::$app->getView()->endBody();
     }
 }
@@ -332,7 +377,8 @@ if (!function_exists('endBody')) {
  * @return string the translated message.
  */
 if (!function_exists('__')) {
-    function __(mixed $message, mixed $category = null, mixed $params = null, ?string $language = null): string {
+    function __(mixed $message, mixed $category = null, mixed $params = null, ?string $language = null): string
+    {
         // The front end site doesn't need to specify the category
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         if (is_array($category)) {
@@ -354,4 +400,13 @@ if (!function_exists('__')) {
         } catch (InvalidConfigException) {
             return $message;
         }
-    }}
+    }
+}
+
+// Alias for the translation function
+if (!function_exists('t')) {
+    function t(mixed $message, mixed $category = null, mixed $params = null, ?string $language = null): string
+    {
+        return __(message: $message, category: $category, params: $params, language: $language);
+    }
+}
