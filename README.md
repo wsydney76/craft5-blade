@@ -117,6 +117,8 @@ Create `.blade.php` files in your views directory:
         @if ($entry->teaser)
             <p class="my-4 text-xl font-bold">{{ $entry->teaser }}</p>
         @endif
+        
+        @markdown($entry->body)
 
         <div class="mx-auto mt-8">
             <x-blocks :blocks="$entry->bodyContent->all()" />
@@ -124,6 +126,16 @@ Create `.blade.php` files in your views directory:
     </article>
 </x-layout>
 ```
+
+### Predefined Directives
+
+The following Blade directives are predefined for convenience:
+- `@markdown($text, $purifierConfig = null)` - Render purified Markdown content to HTML
+- `@paginate($query, $resultsKey = 'elements', $pageInfoKey = 'pageInfo')` - Handle pagination for an element query (experimental)
+- `@renderTwig($template, $data = [])` - Render a Twig template from Blade
+- `@includeLocalized($template, $data = [])` - Include a localized template (experimental)
+
+See below for details.
 
 ### Components
 
