@@ -371,9 +371,9 @@ if (!function_exists('markdown')) {
             return '';
         }
         if ($inline) {
-            return \craft\helpers\Markdown::processParagraph($markdown);
+            return \yii\helpers\Markdown::processParagraph($markdown);
         }
-        return \craft\helpers\Markdown::process($markdown);
+        return \yii\helpers\Markdown::process($markdown);
     }
 }
 if (!function_exists('purify')) {
@@ -381,7 +381,7 @@ if (!function_exists('purify')) {
         if (!$html) {
             return '';
         }
-        return \Craft::$app->getContent()->filterHtml($html, $config);
+        return \Craft\helpers\HtmlPurifier::process($html, $config);
     }
 }
 if (!function_exists('removeClass')) {
