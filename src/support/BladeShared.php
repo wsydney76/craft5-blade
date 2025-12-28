@@ -1,12 +1,16 @@
 <?php
 
-namespace wsydney76\blade;
+namespace wsydney76\blade\support;
 
 use Craft;
 use craft\web\twig\Extension;
+use wsydney76\blade\Blade;
 
 /**
  * Shares Craft's Twig global variables with Blade templates.
+ *
+ *  Note: AI generated from Craft's Twig extension. Provided as is. May contain bugs.
+ *  Please review and test before use.
  */
 class BladeShared
 {

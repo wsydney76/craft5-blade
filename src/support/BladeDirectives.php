@@ -1,9 +1,14 @@
 <?php
 
-namespace wsydney76\blade;
+namespace wsydney76\blade\support;
+
+use wsydney76\blade\Blade;
 
 /**
  * Registers and compiles custom Blade directives.
+ *
+ *  Note: AI generated from Craft's Twig extension. Provided as is. May contain bugs.
+ *  Please review and test before use.
  */
 class BladeDirectives
 {
@@ -137,9 +142,10 @@ PHP;
 $__mdArgs = [%s];
 
 $__mdText = $__mdArgs[0] ?? '';
-$__mdConfig = $__mdArgs[1] ?? null;
+$__mdFlavor = $__mdArgs[1] ?? 'original';
+$__mdConfig = $__mdArgs[2] ?? null;
 
-echo purify(markdown($__mdText), $__mdConfig);
+echo purify(markdown($__mdText, $__mdFlavor), $__mdConfig);
 ?>
 PHP;
 

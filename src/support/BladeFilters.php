@@ -11,6 +11,9 @@ use yii\base\InvalidArgumentException;
 /**
  * Blade filter helpers - wraps Craft CMS Twig filters for use in Blade templates.
  * Provides functionality equivalent to Twig filters without Twig dependency.
+ *
+ * Note: AI generated from Craft's Twig extension. Provided as is. May contain bugs.
+ * Please review and test before use.
  */
 // String case conversion filters
 if (!function_exists('ascii')) {
@@ -366,14 +369,14 @@ if (!function_exists('namespaceInputId')) {
     }
 }
 if (!function_exists('markdown')) {
-    function markdown(string $markdown, bool $inline = false): string {
+    function markdown(string $markdown, string $flavor ='original', bool $inline = false): string {
         if (!$markdown) {
             return '';
         }
         if ($inline) {
-            return \yii\helpers\Markdown::processParagraph($markdown);
+            return \yii\helpers\Markdown::processParagraph($markdown, $flavor);
         }
-        return \yii\helpers\Markdown::process($markdown);
+        return \yii\helpers\Markdown::process($markdown, $flavor);
     }
 }
 if (!function_exists('purify')) {

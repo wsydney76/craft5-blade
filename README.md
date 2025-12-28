@@ -129,8 +129,8 @@ Create `.blade.php` files in your views directory:
 
 ### Predefined Directives
 
-The following Blade directives are predefined for convenience:
-- `@markdown($text, $purifierConfig = null)` - Render purified Markdown content to HTML
+The following Blade directives are predefined:
+- `@markdown($text, $flavor = 'original', $purifierConfig = null)` - Render purified Markdown content to HTML
 - `@paginate($query, $resultsKey = 'elements', $pageInfoKey = 'pageInfo')` - Handle pagination for an element query (experimental)
 - `@renderTwig($template, $data = [])` - Render a Twig template from Blade
 - `@includeLocalized($template, $data = [])` - Include a localized template (experimental)

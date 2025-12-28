@@ -16,6 +16,9 @@ use craft\helpers\FileHelper;
 use craft\utilities\ClearCaches;
 use craft\web\View;
 use wsydney76\blade\models\Settings;
+use wsydney76\blade\support\BladeDirectives;
+use wsydney76\blade\support\BladeIfs;
+use wsydney76\blade\support\BladeShared;
 use wsydney76\blade\web\twig\BladeTwigExtension;
 use yii\base\ErrorException;
 
@@ -52,8 +55,8 @@ class BladePlugin extends Plugin
         Craft::$app->onInit(function() {
             // ...
         });
-        Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
 
+        Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
 
         BladeDirectives::register();
         BladeShared::register();

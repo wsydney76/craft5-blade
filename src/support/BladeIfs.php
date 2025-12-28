@@ -1,8 +1,9 @@
 <?php
 
-namespace wsydney76\blade;
+namespace wsydney76\blade\support;
 
 use Craft;
+use wsydney76\blade\Blade;
 
 class BladeIfs
 {
