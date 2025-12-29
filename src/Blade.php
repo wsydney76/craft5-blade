@@ -115,5 +115,26 @@ class Blade
             $pageInfoKey => (new Paginate())->create($paginator),
         ];
     }
-}
 
+    /**
+     * Register a view composer (Laravel-style).
+     *
+     * @param string|array $views View name(s) or patterns (e.g. '*', 'site.home')
+     * @param \Closure|string $callback Closure(View $view) or class@method
+     */
+    public static function composer(string|array $views, \Closure|string $callback): void
+    {
+        self::instance()->factory()->composer($views, $callback);
+    }
+
+    /**
+     * Register a view creator (runs before the view is rendered, similar to composer).
+     *
+     * @param string|array $views
+     * @param \Closure|string $callback
+     */
+    public static function creator(string|array $views, \Closure|string $callback): void
+    {
+        self::instance()->factory()->creator($views, $callback);
+    }
+}

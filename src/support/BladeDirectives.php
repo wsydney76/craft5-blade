@@ -60,6 +60,12 @@ class BladeDirectives
         Blade::directive('markdown', function($expression) {
             return static::compileMarkdown($expression);
         });
+
+        // header directive (matches Craft’s Twig {% header %} tag behavior)
+        // Usage: @header("Cache-Control: max-age=" . ($expiry->timestamp - $now->timestamp))
+        Blade::directive('header', function($expression) {
+            return static::compileHeader($expression);
+        });
     }
 
     /**
@@ -196,6 +202,19 @@ PHP;
 
     \Craft::$app->getResponse()->redirect($__redirectUrl, $__redirectStatusCode);
     \Craft::$app->end();
+?>
+PHP;
+
+        return \sprintf($template, $expression);
+    }
+
+    private static function compileHeader($expression)
+    {
+        $template = <<<'PHP'
+<?php
+    $__headerParts = array_map('trim', explode(':', %s, 2));
+    \Craft::$app->getResponse()->getHeaders()->set($__headerParts[0], $__headerParts[1] ?? '');
+    unset($__headerParts);
 ?>
 PHP;
 

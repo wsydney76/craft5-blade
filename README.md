@@ -62,7 +62,6 @@ Run `ddev craft plugin/install _blade`.
 - Support for Craft's Twig functions and filters is experimental.
 - Does not support class-based components.
 - Does not support Livewire-like reactive components out of the box.
-- Does not support view composers.
 
 ## Helper Functions and Filters
 
@@ -138,6 +137,7 @@ Create `.blade.php` files in your views directory:
 ### Predefined Directives
 
 The following Blade directives are predefined:
+
 - `@markdown($text, $flavor = 'original', $purifierConfig = null)` - Render purified Markdown content to HTML
 - `@paginate($query, $resultsKey = 'elements', $pageInfoKey = 'pageInfo')` - Handle pagination for an element query (experimental)
 - `@renderTwig($template, $data = [])` - Render a Twig template from Blade
@@ -147,10 +147,7 @@ The following Blade directives are predefined:
 - `@requireLogin` - Require the user to be logged in (throws 403 otherwise)
 - `@requireGuest` - Require the user to be logged out (throws 403 otherwise)
 - `@redirect($url, $statusCode=302)` - Redirects to a given URL (throws a redirect response).
-
-See below for details.
-
-Note that parameters are comma-separated, not space-separated as in Twig.
+- `@header($headerLine)` - Sets an HTTP response header, matching Craft’s Twig `{% header %}` tag compiler behavior
 
 ### Components
 
@@ -488,6 +485,32 @@ Blade::stringable(Money\Money::class, function($money) {
 
 Note that you can't pass additional parameters to the stringable handler. If you need more control, consider using a custom Blade directive or helper function instead.
 
+## View Composers
+
+Laravel-style Blade view composers are supported.
+
+This lets you attach data to views globally or per-view, without having to pass everything from every controller.
+
+Register composers from your module/plugin:
+
+```php
+use wsydney76\blade\Blade;
+
+Blade::composer('article.show', function ($view) {
+    $view->with('composerMessage', 'Injected by a view composer');
+});
+
+// Wildcards are supported by the underlying Illuminate view factory:
+Blade::composer('*', function ($view) {
+    $view->with('composerMessage', 'Injected by a view composer');
+});
+```
+
+Then use the injected variables in your Blade template:
+
+```blade
+{{ $composerMessage }}
+```
 
 ## Common Blade Settings
 

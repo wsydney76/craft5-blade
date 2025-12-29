@@ -62,6 +62,10 @@ class BladeBootstrap
         $filesystem = new Filesystem();
         $events = new Dispatcher($container);
 
+        // Bind events so view composers can resolve the dispatcher
+        $container->instance('events', $events);
+        $container->instance(\Illuminate\Contracts\Events\Dispatcher::class, $events);
+
         // Ensure the compiled cache directory exists
         if (!$filesystem->exists($cachePath)) {
             $filesystem->makeDirectory($cachePath, 0775, true, true);
@@ -109,6 +113,7 @@ class BladeBootstrap
 
         // View finder
         $finder = new FileViewFinder($filesystem, [$viewsPath]);
+        $container->instance('view.finder', $finder);
 
         // Factory
         $this->viewFactory = new Factory($resolver, $finder, $events);
