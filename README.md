@@ -134,8 +134,15 @@ The following Blade directives are predefined:
 - `@paginate($query, $resultsKey = 'elements', $pageInfoKey = 'pageInfo')` - Handle pagination for an element query (experimental)
 - `@renderTwig($template, $data = [])` - Render a Twig template from Blade
 - `@includeLocalized($template, $data = [])` - Include a localized template (experimental)
+- `@requireAdmin` - Require admin access for the current user (throws 403 otherwise)
+- `@requirePermission($permission)` - Require a specific permission for the current user (throws 403 otherwise)
+- `@requireLogin` - Require the user to be logged in (throws 403 otherwise)
+- `@requireGuest` - Require the user to be logged out (throws 403 otherwise)
+- `@redirect($url, $statusCode=302)` - Redirects to a given URL (throws a redirect response).
 
 See below for details.
+
+Note that parameters are comma-separated, not space-separated as in Twig.
 
 ### Components
 

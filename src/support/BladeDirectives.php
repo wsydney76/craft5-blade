@@ -2,6 +2,7 @@
 
 namespace wsydney76\blade\support;
 
+use Craft;
 use wsydney76\blade\Blade;
 
 /**
@@ -25,6 +26,26 @@ class BladeDirectives
         // includeLocalized directive using extracted compiler method
         Blade::directive('includeLocalized', function($expression) {
             return static::compileIncludeLocalized($expression);
+        });
+
+        Blade::directive('requireAdmin', function($expression) {
+            return "<?php if (!\\Craft::\$app->getUser()->getIsAdmin()) { throw new \\yii\\web\\ForbiddenHttpException('Admin access required.'); } ?>";
+        });
+
+        Blade::directive('requireLogin', function($expression) {
+            return "<?php if (\\Craft::\$app->getUser()->getIsGuest()) { throw new \\yii\\web\\UnauthorizedHttpException('Login required.'); } ?>";
+        });
+
+        Blade::directive('requireGuest', function($expression) {
+            return "<?php if (!\\Craft::\$app->getUser()->getIsGuest()) { throw new \\yii\\web\\ForbiddenHttpException('Guest access required.'); } ?>";
+        });
+
+        Blade::directive('requirePermission', function($expression) {
+            return "<?php if (!\\Craft::\$app->getUser()->checkPermission($expression)) { throw new \\yii\\web\\ForbiddenHttpException('Insufficient permissions.'); } ?>";
+        });
+
+        Blade::directive('redirect', function($expression) {
+            return static::compileRedirect($expression);
         });
 
         Blade::directive('set', function($expression) {
@@ -151,4 +172,34 @@ PHP;
 
         return \sprintf($template, $expression);
     }
+
+    private static function compileRedirect(string $expression): string
+    {
+        $template = <<<'PHP'
+<?php
+    $__redirectArgs = [%s];
+  
+    $__redirectUrl = $__redirectArgs[0] ?? null;
+    if (!$__redirectUrl) {
+        throw new \InvalidArgumentException("@redirect requires a URL as the first argument.");
+    }
+
+    $__redirectStatusCode = $__redirectArgs[1] ?? 302;
+    
+    if (!is_int($__redirectStatusCode)) {
+        if (is_numeric($__redirectStatusCode)) {
+            $__redirectStatusCode = (int)$__redirectStatusCode;
+        } else {
+            throw new \InvalidArgumentException("@redirect status code must be an integer.");
+        }
+    }
+
+    \Craft::$app->getResponse()->redirect($__redirectUrl, $__redirectStatusCode);
+    \Craft::$app->end();
+?>
+PHP;
+
+        return \sprintf($template, $expression);
+    }
 }
+
