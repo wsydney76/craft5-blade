@@ -198,6 +198,18 @@ class BladeBootstrap
     }
 
     /**
+     * Register a class-based Blade component.
+     *
+     * Usage: Blade::component('alert', Alert::class)
+     * Then in templates: <x-alert />
+     */
+    public function component(string $name, string $class, ?string $prefix = null): void
+    {
+        // BladeCompiler::component supports an optional prefix (adds x-{prefix}-{name})
+        $this->bladeCompiler->component($name, $class, $prefix);
+    }
+
+    /**
      * Access the underlying View Factory if needed.
      *
      * @return Factory The View Factory instance

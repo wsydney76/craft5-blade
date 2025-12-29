@@ -60,7 +60,6 @@ Run `ddev craft plugin/install _blade`.
 - The central BladeBootstrap.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
 - Not yet reviewed in terms of performance/memory usage.
 - Support for Craft's Twig functions and filters is experimental.
-- Does not support class-based components.
 - Does not support Livewire-like reactive components out of the box.
 
 ## Helper Functions and Filters
@@ -153,6 +152,10 @@ The following Blade directives are predefined:
 
 Create reusable components in `resources/views/components/`:
 
+#### Anonymous components (view-only)
+
+Anonymous components are just Blade views in your components folder.
+
 #### Layout Component (`layout.blade.php`)
 ```blade
 @props(['title' => 'My Site'])
@@ -190,6 +193,96 @@ Use components with:
     <x-image :image="$entry->image->one()" width="600" height="400" />
     ... content ...
 </x-layout>
+```
+
+#### Class-based components
+
+##### 1) Create the component class
+
+Example: `modules/main/components/EntriesList.php`
+
+```php
+<?php
+
+namespace modules\main\components;
+
+use craft\elements\Entry;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
+use Illuminate\View\Component;
+
+class EntriesList extends Component
+{
+    public string $section;
+    public ?string $title;
+    public int $limit;
+    public string $orderBy = 'postDate desc';
+    public ?Collection $entries = null;
+
+    public function __construct(
+        string $section = '*',
+        ?string $title = null,
+        ?int $limit = 5,
+        ?string $orderBy = 'postDate desc')
+    {
+        $this->section = $section;
+        $this->title = $title;
+        $this->limit = $limit;
+        $this->orderBy = $orderBy;
+        $this->entries = Entry::find()
+            ->section($section)
+            ->limit($limit)
+            ->orderBy($orderBy)
+            ->collect();
+    }
+
+    public function render(): View
+    {
+        return view('components.entries-list');
+    }
+}
+```
+
+##### 2) Create the component view
+
+Example: `resources/views/components/entries-list.php`
+
+When using class-based components, prefer using the component’s **public props** directly.
+(Depending on your Illuminate/View version and how the engine is bootstrapped, `$component` may not be available.)
+
+```blade
+@if($entries->count())
+    @if($title)
+        <h3>{{ $title }}</h3>
+    @endif
+
+    <ul>
+        @foreach($entries as $entry)
+            <li>
+                <a href="{{ $entry->url }}" class="text-blue-600 hover:underline">
+                    {{ $entry->title }}</a>
+                <span class="text-sm text-gray-600">{{ $entry->postDate }}</span>
+            </li>
+        @endforeach
+    </ul>
+@endif
+```
+
+##### 3) Register the component
+
+Register class-based components in your module/plugin bootstrap:
+
+```php
+use modules\main\components\EntriesList;
+use wsydney76\blade\Blade;
+
+Blade::component('entries-list', EntriesList::class);
+```
+
+##### 4) Use it in Blade
+
+```blade
+<x-entries-list section="article" :title="t('Latest via class component')" />
 ```
 
 #### Dynamic Components

@@ -137,4 +137,17 @@ class Blade
     {
         self::instance()->factory()->creator($views, $callback);
     }
+
+    /**
+     * Register a class-based Blade component.
+     *
+     * Example:
+     *   Blade::component('alert', \\modules\\main\\components\\Alert::class);
+     * Then use in templates:
+     *   <x-alert />
+     */
+    public static function component(string $name, string $class, ?string $prefix = null): void
+    {
+        self::instance()->component($name, $class, $prefix);
+    }
 }

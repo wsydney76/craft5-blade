@@ -30,6 +30,19 @@ if (!function_exists('app')) {
     }
 }
 
+if (!function_exists('view')) {
+    /**
+     * In this Craft CMS integration we don't have Laravel's global `view()` helper.
+     * The Blade plugin boots an Illuminate container and binds the view factory as `view`.
+     */
+    function view(string $view, array $parameters = [], array $mergeData = []): mixed
+    {
+        /** @var \Illuminate\Contracts\View\Factory $factory */
+        $factory = app('view');
+        return $factory->make($view, $parameters, $mergeData);
+    }
+}
+
 // Create a shared Craft Twig Extension instance that Blade helpers can delegate to.
 // IMPORTANT: BladeHelpers.php is required via require_once from within BladePlugin::init(),
 // and that can occur inside a callback/closure. To ensure the extension instance is truly global
