@@ -31,8 +31,6 @@ class BladePlugin extends Plugin
 {
     public string $schemaVersion = '1.0.0';
 
-    public bool $hasCpSettings = true;
-
     public static function config(): array
     {
         return [
