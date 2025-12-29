@@ -13,11 +13,7 @@
   "autoload": {
     "psr-4": {
       "wsydney76\\blade\\": "src/"
-    },
-    "files": [
-      "src/support/BladeHelpers.php",
-      "src/support/BladeFilters.php"
-    ]
+    }
   },
   "extra": {
     "handle": "_blade",

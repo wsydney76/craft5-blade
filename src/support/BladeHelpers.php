@@ -3,11 +3,10 @@
 use craft\base\ElementInterface;
 use craft\elements\Asset;
 use craft\helpers\Html;
-use craft\helpers\Template as TemplateHelper;
-use craft\helpers\UrlHelper;
-use craft\helpers\App;
 use craft\helpers\Sequence;
+use craft\helpers\UrlHelper;
 use craft\models\EntryType;
+use craft\web\twig\Extension;
 use yii\base\InvalidArgumentException;
 use yii\base\InvalidConfigException;
 use yii\db\Expression;
@@ -31,6 +30,14 @@ if (!function_exists('app')) {
     }
 }
 
+// Create a shared Craft Twig Extension instance that Blade helpers can delegate to.
+// IMPORTANT: BladeHelpers.php is required via require_once from within BladePlugin::init(),
+// and that can occur inside a callback/closure. To ensure the extension instance is truly global
+// (so that `global $__extension;` inside helper functions resolves to the same variable),
+// we must assign it into $GLOBALS.
+if (!isset($GLOBALS['__extension'])) {
+    $GLOBALS['__extension'] = new Extension(\Craft::$app->getView(), \Craft::$app->getView()->twig);
+}
 if (!function_exists('actionUrl')) {
     function actionUrl(string $path = '', array $params = [], ?string $scheme = null): string
     {
@@ -49,18 +56,17 @@ if (!function_exists('alias')) {
 if (!function_exists('clone_var')) {
     function clone_var(mixed $var): mixed
     {
-        return clone $var;
+        global $__extension;
+        return $__extension->cloneFunction($var);
     }
 }
 
 if (!function_exists('collect')) {
     function collect(mixed $var): \Illuminate\Support\Collection
     {
-        $collection = \Illuminate\Support\Collection::make($var);
-        // If all items are elements, return ElementCollection
-        if ($collection->isNotEmpty() && $collection->doesntContain(fn($item) => !$item instanceof ElementInterface)) {
-            return \craft\elements\ElementCollection::make($collection);
-        }
+        global $__extension;
+        /** @var \Illuminate\Support\Collection $collection */
+        $collection = $__extension->collectFunction($var);
         return $collection;
     }
 }
@@ -80,40 +86,26 @@ if (!function_exists('cpUrl')) {
 }
 
 if (!function_exists('create')) {
-    function create(array|string $config): object
+    function create(array|string $config): mixed
     {
-        return (object)\Craft::createObject($config);
+        return \Craft::createObject($config);
     }
 }
 
 if (!function_exists('dataUrl')) {
     function dataUrl(Asset|string $file, ?string $mimeType = null): string
     {
-        try {
-            if ($file instanceof Asset) {
-                return $file->getDataUrl();
-            }
-            return Html::dataUrl(\Craft::getAlias($file), $mimeType);
-        } catch (InvalidArgumentException $e) {
-            \Craft::warning($e->getMessage(), __METHOD__);
-            return '';
-        }
+        global $__extension;
+        return $__extension->dataUrlFunction($file, $mimeType);
     }
 }
 
 if (!function_exists('dump')) {
     function dump(...$vars): string
     {
-        if (!$vars) {
-            return '';
-        }
-        $output = '';
-        foreach ($vars as $var) {
-            ob_start();
-            \Craft::dump($var);
-            $output .= str_replace('<code>', '<code style="display:block;">', ob_get_clean());
-        }
-        return $output;
+        global $__extension;
+        // Craft's dumpFunction expects a Twig context; emulate with an empty context.
+        return $__extension->dumpFunction([], ...$vars);
     }
 }
 
@@ -127,83 +119,49 @@ if (!function_exists('encodeUrl')) {
 if (!function_exists('entryType')) {
     function entryType(string $handle): EntryType
     {
-        $entryType = \Craft::$app->getEntries()->getEntryTypeByHandle($handle);
-        if ($entryType === null) {
-            throw new InvalidArgumentException("Invalid entry type handle: $handle");
-        }
-        return $entryType;
+        global $__extension;
+        return $__extension->entryTypeFunction($handle);
     }
 }
 
 if (!function_exists('expression')) {
     function expression(mixed $expression, array $params = [], array $config = []): Expression
     {
-        return new Expression($expression, $params, $config);
+        global $__extension;
+        return $__extension->expressionFunction($expression, $params, $config);
     }
 }
 
 if (!function_exists('fieldValueSql')) {
     function fieldValueSql(\craft\base\FieldLayoutProviderInterface $provider, string $fieldHandle, ?string $key = null): ?string
     {
-        return $provider->getFieldLayout()->getFieldByHandle($fieldHandle)->getValueSql($key);
-    }
-}
-
-if (!function_exists('getenv_craft')) {
-    function getenv_craft(string $name, mixed $default = null): mixed
-    {
-        return App::env($name) ?? $default;
+        global $__extension;
+        return $__extension->fieldValueSqlFunction($provider, $fieldHandle, $key);
     }
 }
 
 if (!function_exists('gql')) {
     function gql(string $query, ?array $variables = null, ?string $operationName = null): array
     {
-        $schema = \craft\helpers\Gql::createFullAccessSchema();
-        return \Craft::$app->getGql()->executeQuery($schema, $query, $variables, $operationName);
-    }
-}
-
-if (!function_exists('parseEnv')) {
-    function parseEnv(string $value): string
-    {
-        return App::parseEnv($value);
-    }
-}
-
-if (!function_exists('parseBooleanEnv')) {
-    function parseBooleanEnv(string $value): bool
-    {
-        return App::parseBooleanEnv($value);
+        global $__extension;
+        return $__extension->gqlFunction($query, $variables, $operationName);
     }
 }
 
 if (!function_exists('plugin')) {
     function plugin(string $handle): ?\craft\base\PluginInterface
     {
-        return \Craft::$app->getPlugins()->getPlugin($handle);
-    }
-}
-
-if (!function_exists('raw')) {
-    function raw(string $string): string
-    {
-        return (string)TemplateHelper::raw($string);
-    }
-}
-
-if (!function_exists('renderObjectTemplate')) {
-    function renderObjectTemplate(string $template, mixed $object): string
-    {
-        return \Craft::$app->getView()->renderObjectTemplate($template, $object);
+        global $__extension;
+        return $__extension->pluginFunction($handle);
     }
 }
 
 if (!function_exists('seq')) {
     function seq(string $name, ?int $length = null, bool $next = true): int|string
     {
+        global $__extension;
         if ($next) {
-            return Sequence::next($name, $length);
+            return $__extension->seqFunction($name, $length);
         }
         return Sequence::current($name, $length);
     }
@@ -212,13 +170,8 @@ if (!function_exists('seq')) {
 if (!function_exists('shuffle_arr')) {
     function shuffle_arr(iterable $arr): array
     {
-        if ($arr instanceof \Traversable) {
-            $arr = iterator_to_array($arr, false);
-        } else {
-            $arr = (array)$arr;
-        }
-        shuffle($arr);
-        return $arr;
+        global $__extension;
+        return $__extension->shuffleFunction($arr);
     }
 }
 
@@ -294,19 +247,19 @@ if (!function_exists('csrfInput')) {
     }
 }
 if (!function_exists('failMessageInput')) {
-    function failMessageInput(string $message = null): string
+    function failMessageInput(?string $message = null): string
     {
         return Html::failMessageInput($message);
     }
 }
 if (!function_exists('hiddenInput')) {
-    function hiddenInput(string $name, string $value = null, array $options = []): string
+    function hiddenInput(string $name, ?string $value = null, array $options = []): string
     {
         return Html::hiddenInput($name, $value, $options);
     }
 }
 if (!function_exists('input')) {
-    function input(string $type, string $name = null, string $value = null, array $options = []): string
+    function input(string $type, ?string $name = null, ?string $value = null, array $options = []): string
     {
         return Html::input($type, $name, $value, $options);
     }
@@ -324,7 +277,7 @@ if (!function_exists('redirectInput')) {
     }
 }
 if (!function_exists('successMessageInput')) {
-    function successMessageInput(string $message = null): string
+    function successMessageInput(?string $message = null): string
     {
         return Html::successMessageInput($message);
     }
@@ -332,7 +285,10 @@ if (!function_exists('successMessageInput')) {
 if (!function_exists('svg')) {
     function svg(Asset|string $svg, ?bool $sanitize = null, ?bool $namespace = null, ?string $class = null): string
     {
-        $markup = Html::svg($svg, $sanitize, $namespace);
+        global $__extension;
+        $markup = $__extension->svgFunction($svg, $sanitize, $namespace);
+
+        // Keep Blade plugin's legacy `class` argument behavior.
         if ($class !== null) {
             \Craft::$app->getDeprecator()->log('svg()-class', 'The `class` argument of the `svg()` helper has been deprecated. Use attr filter/helpers instead.');
             try {
@@ -341,24 +297,18 @@ if (!function_exists('svg')) {
                 \Craft::warning('Unable to add a class to the SVG: ' . $e->getMessage(), __METHOD__);
             }
         }
+
         return $markup;
     }
 }
 if (!function_exists('tag')) {
     function tag(string $type, array $attributes = []): string
     {
-        $html = \craft\helpers\ArrayHelper::remove($attributes, 'html', '');
-        $text = \craft\helpers\ArrayHelper::remove($attributes, 'text');
-        if ($text !== null) {
-            $html = Html::encode($text);
-        }
-        return Html::tag($type, $html, $attributes);
-    }
-}
-if (!function_exists('ul')) {
-    function ul(array $items, array $attributes = []): string
-    {
-        return Html::ul($items, $attributes);
+        global $__extension;
+
+
+
+        return $__extension->tagFunction($type, $attributes);
     }
 }
 

@@ -1,14 +1,13 @@
 <?php
 
 use craft\helpers\ArrayHelper;
-use craft\helpers\DateTimeHelper;
-use craft\helpers\Db;
-use craft\helpers\Html;
-use craft\helpers\Json;
 use craft\helpers\StringHelper;
-use craft\models\Address;
-use yii\base\InvalidArgumentException;
+use craft\web\twig\Extension;
 
+// Create a shared Craft Twig Extension instance that Blade filters can delegate to.
+if (!isset($GLOBALS['__extension'])) {
+    $GLOBALS['__extension'] = new Extension(\Craft::$app->getView(), \Craft::$app->getView()->twig);
+}
 /**
  * Blade filter helpers - wraps Craft CMS Twig filters for use in Blade templates.
  * Provides functionality equivalent to Twig filters without Twig dependency.
@@ -24,54 +23,57 @@ if (!function_exists('ascii')) {
 }
 if (!function_exists('camel')) {
     function camel(mixed $string): string {
-        return StringHelper::toCamelCase((string)$string);
+        global $__extension;
+        return $__extension->camelFilter($string);
     }
 }
 if (!function_exists('kebab')) {
     function kebab(mixed $string, string $glue = '-', bool $lower = true, bool $removePunctuation = true): string {
-        return StringHelper::toKebabCase((string)$string, $glue, $lower, $removePunctuation);
+        global $__extension;
+        return $__extension->kebabFilter($string, $glue, $lower, $removePunctuation);
     }
 }
 if (!function_exists('pascal')) {
     function pascal(mixed $string): string {
-        return StringHelper::toPascalCase((string)$string);
+        global $__extension;
+        return $__extension->pascalFilter($string);
     }
 }
 if (!function_exists('snake')) {
     function snake(mixed $string): string {
-        return StringHelper::toSnakeCase((string)$string);
+        global $__extension;
+        return $__extension->snakeFilter($string);
     }
 }
 if (!function_exists('lcfirst')) {
     function lcfirst(mixed $string): string {
-        return StringHelper::lowercaseFirst((string)$string);
+        global $__extension;
+        return $__extension->lcfirstFilter($string);
     }
 }
 if (!function_exists('ucfirst')) {
     function ucfirst(mixed $string): string {
-        return StringHelper::upperCaseFirst((string)$string);
+        global $__extension;
+        return $__extension->ucfirstFilter($string);
     }
 }
 if (!function_exists('ucwords')) {
     function ucwords(string $string): string {
-        $charset = 'UTF-8';
-        if ($charset) {
-            return mb_convert_case($string, MB_CASE_TITLE, $charset);
-        }
-        return \ucwords(strtolower($string));
+        global $__extension;
+        // Twig's ucwords filter needs environment; Extension handles that internally.
+        return $__extension->ucwordsFilter(\Craft::$app->getView()->twig, $string);
     }
 }
 if (!function_exists('truncate')) {
     function truncate(string $string, int $length, string $suffix = '…', bool $splitSingleWord = true): string {
-        if ($string === '' || $length <= 0) {
-            return $string;
-        }
-        return StringHelper::safeTruncate($string, $length, $suffix, $splitSingleWord);
+        global $__extension;
+        return $__extension->truncateFilter($string, $length, $suffix, $splitSingleWord);
     }
 }
 if (!function_exists('widont')) {
     function widont(string $string): string {
-        return preg_replace('/\s+(\S+)$/', '&nbsp;$1', $string);
+        global $__extension;
+        return $__extension->widontFilter($string);
     }
 }
 // Array/Collection filters
@@ -138,92 +140,66 @@ if (!function_exists('flatten')) {
 }
 if (!function_exists('append')) {
     function append(mixed $value, mixed $append): mixed {
-        if (is_array($value)) {
-            $value[] = $append;
-        } else {
-            $value = (string)$value . (string)$append;
-        }
-        return $value;
+        global $__extension;
+        return $__extension->appendFilter($value, $append);
     }
 }
 if (!function_exists('prepend')) {
     function prepend(mixed $value, mixed $prepend): mixed {
-        if (is_array($value)) {
-            array_unshift($value, $prepend);
-        } else {
-            $value = (string)$prepend . (string)$value;
-        }
-        return $value;
+        global $__extension;
+        return $__extension->prependFilter($value, $prepend);
     }
 }
 if (!function_exists('push')) {
     function push(array $array, mixed ...$elements): array {
-        foreach ($elements as $element) {
-            $array[] = $element;
-        }
-        return $array;
+        global $__extension;
+        return $__extension->pushFilter($array, ...$elements);
     }
 }
 if (!function_exists('unshift')) {
     function unshift(array $array, mixed ...$elements): array {
-        array_unshift($array, ...$elements);
-        return $array;
+        global $__extension;
+        return $__extension->unshiftFilter($array, ...$elements);
     }
 }
 if (!function_exists('merge')) {
     function merge(array $array, array ...$arrays): array {
-        return array_merge($array, ...$arrays);
+        global $__extension;
+        $result = $array;
+        foreach ($arrays as $arr2) {
+            $result = $__extension->mergeFilter($result, $arr2, false);
+        }
+        return $result;
     }
 }
 if (!function_exists('without')) {
     function without(array $array, string|int ...$keys): array {
-        foreach ($keys as $key) {
-            unset($array[$key]);
-        }
-        return $array;
+        global $__extension;
+        return $__extension->withoutFilter($array, ...$keys);
     }
 }
 if (!function_exists('withoutKey')) {
     function withoutKey(array $array, mixed $value): array {
-        return array_filter($array, fn($v, $k) => $k !== $value, ARRAY_FILTER_USE_BOTH);
+        global $__extension;
+        return $__extension->withoutKeyFilter($array, $value);
     }
 }
 if (!function_exists('indexOf')) {
     function indexOf(array $array, mixed $needle, bool $strict = false): int|string|null {
-        if ($array instanceof \Traversable) {
-            $array = iterator_to_array($array);
-        }
-        foreach ($array as $key => $value) {
-            if ($strict ? $value === $needle : $value == $needle) {
-                return $key;
-            }
-        }
-        return null;
+        global $__extension;
+        return $__extension->indexOfFilter($array, $needle, $strict ? 0 : null);
     }
 }
 if (!function_exists('replace')) {
     function replace(mixed $value, mixed $search, mixed $replace): mixed {
-        if (is_array($value)) {
-            return array_replace($value, [$search => $replace]);
-        }
-        return str_replace($search, $replace, (string)$value);
+        global $__extension;
+        return $__extension->replaceFilter($value, $search, $replace);
     }
 }
 if (!function_exists('group')) {
     function group(array $array, string|callable $key): array {
-        if ($array instanceof \Traversable) {
-            $array = iterator_to_array($array);
-        }
-        $grouped = [];
-        foreach ($array as $item) {
-            if (is_callable($key)) {
-                $keyValue = $key($item);
-            } else {
-                $keyValue = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
-            }
-            $grouped[$keyValue][] = $item;
-        }
-        return $grouped;
+        global $__extension;
+        return $__extension->groupFilter($array, $key);
     }
 }
 if (!function_exists('multisort')) {
@@ -251,377 +227,182 @@ if (!function_exists('multisort')) {
 // Number/Currency filters
 if (!function_exists('currency')) {
     function currency(mixed $value, ?string $currency = null, array $options = [], array $textOptions = [], bool $stripZeros = false): string {
-        if ($value === null || $value === '') {
-            return '';
-        }
-        try {
-            return \Craft::$app->getFormatter()->asCurrency($value, $currency, $options, $textOptions, $stripZeros);
-        } catch (InvalidArgumentException) {
-            return (string)$value;
-        }
+        global $__extension;
+        return $__extension->currencyFilter($value, $currency, $options, $textOptions, $stripZeros);
     }
 }
 if (!function_exists('filesize')) {
     function filesize(mixed $value, ?int $decimals = null, array $options = [], array $textOptions = []): string {
-        if ($value === null || $value === '') {
-            return '';
-        }
-        try {
-            return \Craft::$app->getFormatter()->asShortSize($value, $decimals, $options, $textOptions);
-        } catch (InvalidArgumentException) {
-            return (string)$value;
-        }
+        global $__extension;
+        return $__extension->filesizeFilter($value, $decimals, $options, $textOptions);
     }
 }
 if (!function_exists('number')) {
     function number(mixed $value, ?int $decimals = null, array $options = [], array $textOptions = []): string {
-        if ($value === null || $value === '') {
-            return '';
-        }
-        try {
-            return \Craft::$app->getFormatter()->asDecimal($value, $decimals, $options, $textOptions);
-        } catch (InvalidArgumentException) {
-            return (string)$value;
-        }
+        global $__extension;
+        return $__extension->numberFilter($value, $decimals, $options, $textOptions);
     }
 }
 if (!function_exists('percentage')) {
     function percentage(mixed $value, ?int $decimals = null, array $options = [], array $textOptions = []): string {
-        if ($value === null || $value === '') {
-            return '';
-        }
-        try {
-            return \Craft::$app->getFormatter()->asPercent($value, $decimals, $options, $textOptions);
-        } catch (InvalidArgumentException) {
-            return (string)$value;
-        }
+        global $__extension;
+        return $__extension->percentageFilter($value, $decimals, $options, $textOptions);
     }
 }
 if (!function_exists('money')) {
     function money(mixed $money, ?string $formatLocale = null): ?string {
-        if ($money === null) {
-            return null;
-        }
-        return \craft\helpers\MoneyHelper::toString($money, $formatLocale);
+        global $__extension;
+        return $__extension->moneyFilter($money, $formatLocale);
     }
 }
+
 // Date/Time filters
-if (!function_exists('duration')) {
-    function duration(int|float|DateTime|string $from, int|float|DateTime|string|null $to = null, bool $showSeconds = false): string {
-        return DateTimeHelper::humanDuration($from, $to, $showSeconds);
-    }
-}
 if (!function_exists('timestamp')) {
     function timestamp(mixed $value): ?int {
-        if ($value === null) {
-            return null;
-        }
-        if ($value instanceof DateTime) {
-            return $value->getTimestamp();
-        }
-        if (is_numeric($value)) {
-            return (int)$value;
-        }
-        try {
-            $date = new DateTime((string)$value);
-            return $date->getTimestamp();
-        } catch (\Exception) {
-            return null;
-        }
+        global $__extension;
+        return $__extension->timestampFilter($value);
     }
 }
+
 // HTML/Markup filters
 if (!function_exists('address')) {
     function address(?\craft\elements\Address $address, array $options = []): string {
-        if ($address === null) {
-            return '';
-        }
-        return \Craft::$app->getAddresses()->formatAddress($address, $options);
+        global $__extension;
+        return $__extension->addressFilter($address, $options);
     }
 }
-if (!function_exists('explodeClass')) {
-    function explodeClass(mixed $input): array {
-        return Html::explodeClass($input);
-    }
-}
-if (!function_exists('explodeStyle')) {
-    function explodeStyle(mixed $input): array {
-        return Html::explodeStyle($input);
-    }
-}
-if (!function_exists('id')) {
-    function id(string $name): string {
-        return Html::id($name);
-    }
-}
-if (!function_exists('namespaceInputs')) {
-    function namespaceInputs(string $html, string $namespace = ''): string {
-        return \Craft::$app->getView()->namespaceInputs($html, $namespace);
-    }
-}
-if (!function_exists('namespaceInputName')) {
-    function namespaceInputName(string $inputName, string $namespace = ''): string {
-        return \Craft::$app->getView()->namespaceInputName($inputName, $namespace);
-    }
-}
-if (!function_exists('namespaceInputId')) {
-    function namespaceInputId(string $inputId, string $namespace = ''): string {
-        return \Craft::$app->getView()->namespaceInputId($inputId, $namespace);
-    }
-}
+
 if (!function_exists('markdown')) {
-    function markdown(string $markdown, string $flavor ='original', bool $inline = false): string {
-        if (!$markdown) {
-            return '';
-        }
-        if ($inline) {
-            return \yii\helpers\Markdown::processParagraph($markdown, $flavor);
-        }
-        return \yii\helpers\Markdown::process($markdown, $flavor);
+    function markdown(mixed $markdown, ?string $flavor = null, bool $inlineOnly = false, bool $encode = false): string {
+        global $__extension;
+        return $__extension->markdownFilter($markdown, $flavor, $inlineOnly, $encode);
     }
 }
+
 if (!function_exists('purify')) {
     function purify(string $html, ?array $config = null): string {
-        if (!$html) {
-            return '';
-        }
-        return \Craft\helpers\HtmlPurifier::process($html, $config);
+        global $__extension;
+        return $__extension->purifyFilter($html, $config);
     }
 }
+
 if (!function_exists('removeClass')) {
     function removeClass(string $html, string|array $class): string {
-        if (!is_array($class)) {
-            $class = (array)$class;
-        }
-        try {
-            return Html::modifyTagAttributes($html, ['class' => static function($classes) use ($class) {
-                return array_diff($classes, $class);
-            }]);
-        } catch (InvalidArgumentException) {
-            return $html;
-        }
+        global $__extension;
+        return $__extension->removeClassFilter($html, $class);
     }
 }
+
 if (!function_exists('parseAttr')) {
     function parseAttr(string $attrString): array {
-        $attributes = [];
-        if (preg_match_all('/(\w+)=["\']?([^"\'\s]+)["\']?/', $attrString, $matches)) {
-            for ($i = 0; $i < count($matches[0]); $i++) {
-                $attributes[$matches[1][$i]] = $matches[2][$i];
-            }
-        }
-        return $attributes;
+        global $__extension;
+        return $__extension->parseAttrFilter($attrString);
     }
 }
+
 if (!function_exists('parseRefs')) {
     function parseRefs(string $string): string {
-        return \Craft::$app->getElements()->parseRefs($string);
+        global $__extension;
+        return $__extension->parseRefsFilter($string);
     }
 }
+
 // Encoding/Hashing filters
 if (!function_exists('hash')) {
     function hash(mixed $value): string {
         return \Craft::$app->getSecurity()->hashData((string)$value);
     }
 }
-if (!function_exists('json_encode')) {
-    function json_encode(mixed $value, int $options = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APO | JSON_HEX_QUOT, int $depth = 512): string {
-        return \json_encode($value, $options, $depth);
-    }
-}
-if (!function_exists('json_decode')) {
-    function json_decode(string $json, bool $assoc = true, int $depth = 512, int $options = 0): mixed {
-        return Json::decode($json, $assoc, $depth, $options);
-    }
-}
+
 if (!function_exists('encenc')) {
     function encenc(mixed $value): string {
-        return \Craft::$app->getSecurity()->encryptByPassword((string)$value, \Craft::$app->getConfig()->getGeneral()->securityKey);
+        global $__extension;
+        return $__extension->encencFilter($value);
     }
 }
-if (!function_exists('literal')) {
-    function literal(mixed $string): string {
-       return Db::escapeParam((string)$string);
-    }
-}
+
 // Complex filters that work with closures/callables
 if (!function_exists('find')) {
-    function find(array $array, callable|string|null $key = null, mixed $value = null): mixed {
-        if ($array instanceof \Traversable) {
-            $array = iterator_to_array($array);
-        }
-        if ($key === null) {
-            return reset($array);
-        }
-        if (is_callable($key)) {
-            foreach ($array as $item) {
-                if ($key($item)) {
-                    return $item;
-                }
-            }
-        } else {
-            foreach ($array as $item) {
-                $itemValue = is_array($item) ? ($item[$key] ?? null) : ($item->{$key} ?? null);
-                if ($itemValue == $value) {
-                    return $item;
-                }
-            }
-        }
-        return null;
+    function find(mixed $value, mixed $arrow = null, mixed ...$args): mixed {
+        global $__extension;
+        return $__extension->findFilter(\Craft::$app->getView()->twig, $value, $arrow, ...$args);
     }
 }
+
 if (!function_exists('filter')) {
-    function filter(array $array, callable $callback): array {
-        if ($array instanceof \Traversable) {
-            $array = iterator_to_array($array);
-        }
-        return array_filter($array, $callback, ARRAY_FILTER_USE_BOTH);
+    function filter(mixed $value, mixed $arrow = null): mixed {
+        global $__extension;
+        return $__extension->filterFilter(\Craft::$app->getView()->twig, $value, $arrow);
     }
 }
+
 if (!function_exists('length')) {
     function length(mixed $value): int {
-        if (is_array($value) || $value instanceof \Countable) {
-            return count($value);
-        }
-        if ($value instanceof \Traversable) {
-            return iterator_count($value);
-        }
-        return strlen((string)$value);
+        global $__extension;
+        return $__extension->lengthFilter(\Craft::$app->getView()->twig, $value);
     }
 }
+
 if (!function_exists('sort')) {
-    function sort(array $array, callable|string|null $arrow = null): array {
-        if ($array instanceof \Traversable) {
-            $array = iterator_to_array($array);
-        }
-        if ($arrow === null) {
-            asort($array);
-        } elseif (is_callable($arrow)) {
-            usort($array, function($a, $b) use ($arrow) {
-                $aVal = $arrow($a);
-                $bVal = $arrow($b);
-                return $aVal <=> $bVal;
-            });
-        } else {
-            usort($array, function($a, $b) use ($arrow) {
-                $aVal = is_array($a) ? ($a[$arrow] ?? null) : ($a->{$arrow} ?? null);
-                $bVal = is_array($b) ? ($b[$arrow] ?? null) : ($b->{$arrow} ?? null);
-                return $aVal <=> $bVal;
-            });
-        }
-        return $array;
+    function sort(mixed $array, mixed $arrow = null): mixed {
+        global $__extension;
+        return $__extension->sortFilter(\Craft::$app->getView()->twig, $array, $arrow);
     }
 }
+
 if (!function_exists('reduce')) {
-    function reduce(array $array, callable $arrow, mixed $initial = null): mixed {
-        if ($array instanceof \Traversable) {
-            $array = iterator_to_array($array);
-        }
-        return array_reduce($array, $arrow, $initial);
+    function reduce(mixed $array, mixed $arrow, mixed $initial = null): mixed {
+        global $__extension;
+        return $__extension->reduceFilter(\Craft::$app->getView()->twig, $array, $arrow, $initial);
     }
 }
+
 if (!function_exists('map')) {
-    function map(array $array, callable $arrow): array {
-        if ($array instanceof \Traversable) {
-            $array = iterator_to_array($array);
-        }
-        return array_map($arrow, $array);
+    function map(mixed $array, mixed $arrow): mixed {
+        global $__extension;
+        return $__extension->mapFilter(\Craft::$app->getView()->twig, $array, $arrow);
     }
 }
+
 // Special/Output filters for date formatting
 if (!function_exists('atom')) {
-    function atom(mixed $date): string {
-        if ($date instanceof DateTime) {
-            return $date->format(DateTime::ATOM);
-        }
-        try {
-            $dateTime = new DateTime((string)$date);
-            return $dateTime->format(DateTime::ATOM);
-        } catch (\Exception) {
-            return '';
-        }
+    function atom(mixed $date, mixed $timezone = null): string {
+        global $__extension;
+        return $__extension->atomFilter(\Craft::$app->getView()->twig, $date, $timezone);
     }
 }
+
 if (!function_exists('httpdate')) {
-    function httpdate(mixed $date): string {
-        if ($date instanceof DateTime) {
-            return $date->format(DateTime::RFC7231);
-        }
-        try {
-            $dateTime = new DateTime((string)$date);
-            return $dateTime->format(DateTime::RFC7231);
-        } catch (\Exception) {
-            return '';
-        }
+    function httpdate(mixed $date, mixed $timezone = null): string {
+        global $__extension;
+        return $__extension->httpdateFilter(\Craft::$app->getView()->twig, $date, $timezone);
     }
 }
+
 if (!function_exists('rss')) {
-    function rss(mixed $date): string {
-        if ($date instanceof DateTime) {
-            return $date->format(DateTime::RFC2822);
-        }
-        try {
-            $dateTime = new DateTime((string)$date);
-            return $dateTime->format(DateTime::RFC2822);
-        } catch (\Exception) {
-            return '';
-        }
+    function rss(mixed $date, mixed $timezone = null): string {
+        global $__extension;
+        return $__extension->rssFilter(\Craft::$app->getView()->twig, $date, $timezone);
     }
 }
+
 if (!function_exists('date')) {
-    function date(mixed $date, string $format = 'Y-m-d', ?string $timezone = null): string {
-        if ($date instanceof DateTime) {
-            if ($timezone) {
-                $date->setTimezone(new \DateTimeZone($timezone));
-            }
-            return $date->format($format);
-        }
-        try {
-            $dateTime = new DateTime((string)$date);
-            if ($timezone) {
-                $dateTime->setTimezone(new \DateTimeZone($timezone));
-            }
-            return $dateTime->format($format);
-        } catch (\Exception) {
-            return '';
-        }
+    function date(mixed $date = null, mixed $timezone = null): \DateTimeInterface {
+        global $__extension;
+        return $__extension->dateFunction(\Craft::$app->getView()->twig, $date, $timezone);
     }
 }
+
 if (!function_exists('time')) {
-    function time(mixed $date, string $format = 'H:i', ?string $timezone = null): string {
-        if ($date instanceof DateTime) {
-            if ($timezone) {
-                $date->setTimezone(new \DateTimeZone($timezone));
-            }
-            return $date->format($format);
-        }
-        try {
-            $dateTime = new DateTime((string)$date);
-            if ($timezone) {
-                $dateTime->setTimezone(new \DateTimeZone($timezone));
-            }
-            return $dateTime->format($format);
-        } catch (\Exception) {
-            return '';
-        }
+    function time(mixed $date = null, mixed $timezone = null): string {
+        global $__extension;
+        return $__extension->timeFilter(\Craft::$app->getView()->twig, $date, $timezone);
     }
 }
+
 if (!function_exists('datetime')) {
-    function datetime(mixed $date, string $format = 'Y-m-d H:i:s', ?string $timezone = null): string {
-        if ($date instanceof DateTime) {
-            if ($timezone) {
-                $date->setTimezone(new \DateTimeZone($timezone));
-            }
-            return $date->format($format);
-        }
-        try {
-            $dateTime = new DateTime((string)$date);
-            if ($timezone) {
-                $dateTime->setTimezone(new \DateTimeZone($timezone));
-            }
-            return $dateTime->format($format);
-        } catch (\Exception) {
-            return '';
-        }
+    function datetime(mixed $date = null, mixed $timezone = null): string {
+        global $__extension;
+        return $__extension->datetimeFilter(\Craft::$app->getView()->twig, $date, $timezone);
     }
 }

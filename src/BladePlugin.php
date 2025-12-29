@@ -56,6 +56,10 @@ class BladePlugin extends Plugin
 
         Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
 
+        // Don't use composers autoload, because we need Craft to be initialized first
+        require_once 'support/BladeHelpers.php';
+        require_once 'support/BladeFilters.php';
+
         BladeDirectives::register();
         BladeShared::register();
         BladeIfs::register();
