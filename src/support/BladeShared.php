@@ -9,8 +9,13 @@ use wsydney76\blade\Blade;
 /**
  * Shares Craft's Twig global variables with Blade templates.
  *
- *  Note: AI generated from Craft's Twig extension. Provided as is. May contain bugs.
- *  Please review and test before use.
+ * This makes the same globals you typically have in Twig (e.g. `craft`, `currentUser`,
+ * `currentSite`, etc.) available as variables in Blade views.
+ *
+ * Implementation detail:
+ * We instantiate Craft's Twig `Extension` and call `getGlobals()`. Some globals may be lazy
+ * objects, but others can trigger service lookups. If you notice performance issues, consider
+ * sharing a smaller subset (or sharing lazily via closures).
  */
 class BladeShared
 {

@@ -9,10 +9,12 @@ use wsydney76\blade\Blade;
 
 /**
  * Twig extension that provides Blade rendering capabilities within Twig templates.
+ *
+ * Exposes:
+ * - `renderBlade(view, data = [])` -> returns raw HTML produced by Blade.
  */
 class BladeTwigExtension extends AbstractExtension
 {
-
     /**
      * Register custom Twig functions.
      *
@@ -23,10 +25,11 @@ class BladeTwigExtension extends AbstractExtension
         // Define custom Twig functions
         // (see https://twig.symfony.com/doc/3.x/advanced.html#functions)
         return [
+            // Returns a Twig Markup/"raw" value so the Blade output isn't double-escaped by Twig.
+            // Treat the Blade output as trusted HTML, similar to Twig's `|raw`.
             new TwigFunction('renderBlade', function(string $view, array $data = []) {
                return Template::raw(Blade::render($view, $data));
             }),
         ];
     }
-
 }

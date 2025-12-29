@@ -23,12 +23,22 @@ use wsydney76\blade\web\twig\BladeTwigExtension;
 use yii\base\ErrorException;
 
 /**
- * Blade plugin
+ * Main Craft CMS plugin class for Blade.
+ *
+ * Responsibilities:
+ * - Boots the Illuminate/Blade runtime via the `blade` component (see `BladeBootstrap`).
+ * - Registers Twig integration (`renderBlade`) so Twig templates can delegate to Blade.
+ * - Registers Blade directives/conditionals and exposes Craft globals/helpers/filters to Blade.
+ * - Hooks into element routing to support `blade:` and `action:` template targets.
+ * - Adds a "Blade Template Cache" option to Craft's "Clear Caches" utility.
  *
  * @method static BladePlugin getInstance()
  */
 class BladePlugin extends Plugin
 {
+    /**
+     * Craft schema version for project config / migrations.
+     */
     public string $schemaVersion = '1.0.0';
 
     public static function config(): array
@@ -46,20 +56,24 @@ class BladePlugin extends Plugin
     {
         parent::init();
 
+        // Register Craft event handlers (routing, template roots, clear-caches integration).
         $this->attachEventHandlers();
 
         // Any code that creates an element query or loads Twig should be deferred until
-        // after Craft is fully initialized, to avoid conflicts with other plugins/modules
+        // after Craft is fully initialized, to avoid conflicts with other plugins/modules.
         Craft::$app->onInit(function() {
-            // ...
+            // Intentionally left blank for future initialization that must run after Craft boot.
         });
 
+        // Provide a small Twig bridge so Twig templates can call `{{ renderBlade('view', {...}) }}`.
         Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
 
-        // Don't use composers autoload, because we need Craft to be initialized first
+        // Note: We purposely don't rely on Composer autoload for these files.
+        // They define global functions (helpers/filters) which depend on Craft being initialized.
         require_once 'support/BladeHelpers.php';
         require_once 'support/BladeFilters.php';
 
+        // Register Blade compile-time directives and runtime conveniences.
         BladeDirectives::register();
         BladeShared::register();
         BladeIfs::register();
@@ -69,15 +83,13 @@ class BladePlugin extends Plugin
      * Attach plugin event handlers.
      *
      * Registers handlers for:
-     * - Template root registration
-     * - Element route resolution (supports blade: and action: prefixes)
+     * - Template root registration (`@blade`)
+     * - Element route resolution (supports `blade:` and `action:` prefixes, plus `.blade.php` templates)
      * - Cache clearing utility integration
      */
     private function attachEventHandlers(): void
     {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
-
+        // Allow Twig to resolve `@blade/...` templates from this plugin's `src/templates` folder.
         Event::on(
             View::class,
             View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
@@ -86,14 +98,24 @@ class BladePlugin extends Plugin
             }
         );
 
+        // Intercept element route resolution so entries can point at Blade templates.
+        //
+        // Supported section template formats:
+        // - `action:controller/action`   -> route directly to an action.
+        // - `blade:some.view`            -> render `resources/views/some/view.blade.php`.
+        // - `path/to/view.blade.php`     -> convenience: converts to dotted form `path.to.view`.
+        //
+        // The controller `_blade/base-blade/render` expects a `view` route param.
         Event::on(
             Entry::class,
             Element::EVENT_SET_ROUTE,
             function(SetElementRouteEvent $event): void {
-
                 /** @var Entry $entry */
                 $entry = $event->sender;
 
+                // Craft can resolve routes from:
+                // - section site settings (normal entries)
+                // - field site settings (e.g. Matrix block route handling)
                 $template = $entry->section ?
                     // craft\elements\Entry::route()
                     $entry->section->getSiteSettings()[$entry->siteId]->template ?? null :
@@ -104,15 +126,16 @@ class BladePlugin extends Plugin
                     return;
                 }
 
+                // `action:` -> bypass Blade, run controller action directly.
                 if (str_starts_with($template, 'action:')) {
-                    // Assume the setting is correct, will throw an error anyway if not
+                    // Assume the setting is correct; Craft will throw if the route is invalid.
                     $action = explode(':', $template)[1];
                     $event->route = $action;
                     $event->handled = true;
                 }
 
+                // `blade:` -> dotted view name, rendered by BaseBladeController.
                 if (str_starts_with($template, 'blade:')) {
-                    // Assume the setting is correct, will throw an error anyway if not
                     $view = explode(':', $template)[1];
                     Craft::$app->urlManager->setRouteParams([
                         'view' => $view,
@@ -121,6 +144,8 @@ class BladePlugin extends Plugin
                     $event->handled = true;
                 }
 
+                // Convenience: treat `.blade.php` file paths as Blade view names.
+                // Example: `blog/entry.blade.php` -> `blog.entry`.
                 if (str_ends_with($template, '.blade.php')) {
                     $view = str_replace('.blade.php', '', $template);
                     $view = str_replace('/', '.', $view);
@@ -130,13 +155,14 @@ class BladePlugin extends Plugin
                     $event->route = "_blade/base-blade/render";
                     $event->handled = true;
                 }
-            });
+            }
+        );
 
+        // Expose a dedicated cache clear option for compiled Blade templates.
         Event::on(
             ClearCaches::class,
             ClearCaches::EVENT_REGISTER_CACHE_OPTIONS,
             function(RegisterCacheOptionsEvent $event): void {
-                // Register caches for the Clear Cache Utility
                 $event->options = array_merge(
                     $event->options,
                     [
@@ -145,28 +171,31 @@ class BladePlugin extends Plugin
                             'label' => 'Blade Template Cache',
                             'action' => [$this, 'clearCache'],
                             'info' => 'Clears the compiled Blade template cache files.',
-                        ]
+                        ],
                     ]
                 );
             }
         );
     }
 
-
     protected function createSettingsModel(): ?Model
     {
         return new Settings();
     }
 
-
     /**
      * Clear the compiled Blade template cache.
      *
-     * @throws ErrorException
+     * This deletes the compiled PHP files generated by Blade (not the source templates).
+     * The directory is resolved from `$BLADE_CACHE_PATH` if set, otherwise defaults to
+     * Craft's runtime path `@runtime/blade/cache`.
+     *
+     * Note: This is intentionally conservative. If the directory doesn't exist, it returns early.
+     *
+     * @throws ErrorException If the cache directory exists but can't be cleared.
      */
     public function clearCache(): void
     {
-        // template caches
         $dir = App::parseEnv('$BLADE_CACHE_PATH') ?: App::parseEnv('@runtime/blade/cache');
         if (!is_dir($dir)) {
             return;

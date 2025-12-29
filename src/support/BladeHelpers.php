@@ -1,23 +1,32 @@
 <?php
 
-use craft\base\ElementInterface;
-use craft\elements\Asset;
-use craft\helpers\Html;
-use craft\helpers\Sequence;
-use craft\helpers\UrlHelper;
-use craft\models\EntryType;
-use craft\web\twig\Extension;
-use yii\base\InvalidArgumentException;
-use yii\base\InvalidConfigException;
-use yii\db\Expression;
+// Keep this file in the global namespace: it defines global helper functions.
+
+// (No imports: PhpStorm can mis-resolve imported names in files that declare global functions.)
+
+/**
+ * Blade helper functions.
+ *
+ * This file defines *global* PHP helper functions so Blade templates can call helpers that mirror
+ * Craft's Twig functions (and a couple of Laravel helpers).
+ *
+ * Implementation notes:
+ * - Helpers are declared behind `function_exists()` so projects can override them.
+ * - Many helpers delegate to Craft's Twig `Extension` methods.
+ * - Because this file can be included from within a closure during plugin boot, we store the shared
+ *   Twig Extension instance in `$GLOBALS['__extension']` so all `global $__extension;` usages can
+ *   reference the same instance.
+ */
 
 // Provide wrappers as global helper functions for Blade templates.
 // Skip ones that duplicate native PHP functions (ceil, floor, get_class, array_combine).
 
 if (!function_exists('app')) {
     /**
-     * Get the available container instance.
-     * This helper is required by Laravel Blade's stringable feature.
+     * Resolve a service from the Illuminate container used by this plugin, or return the container.
+     *
+     * @param string|null $abstract Service id/class name to resolve. When null, returns the container.
+     * @param array<string, mixed> $parameters Parameters used when building the service.
      */
     function app(?string $abstract = null, array $parameters = []): mixed
     {
@@ -32,8 +41,11 @@ if (!function_exists('app')) {
 
 if (!function_exists('view')) {
     /**
-     * In this Craft CMS integration we don't have Laravel's global `view()` helper.
-     * The Blade plugin boots an Illuminate container and binds the view factory as `view`.
+     * Create an Illuminate view instance.
+     *
+     * @param string $view Dotted view name.
+     * @param array<string, mixed> $parameters
+     * @param array<string, mixed> $mergeData
      */
     function view(string $view, array $parameters = [], array $mergeData = []): mixed
     {
@@ -49,16 +61,28 @@ if (!function_exists('view')) {
 // (so that `global $__extension;` inside helper functions resolves to the same variable),
 // we must assign it into $GLOBALS.
 if (!isset($GLOBALS['__extension'])) {
-    $GLOBALS['__extension'] = new Extension(\Craft::$app->getView(), \Craft::$app->getView()->twig);
+    $GLOBALS['__extension'] = new \craft\web\twig\Extension(\Craft::$app->getView(), \Craft::$app->getView()->twig);
 }
 if (!function_exists('actionUrl')) {
+    /**
+     * Generate an action URL.
+     *
+     * This is a thin wrapper around Craft's UrlHelper::actionUrl().
+     *
+     * @param string $path Controller/action path.
+     * @param array<string, mixed> $params Query/body params.
+     * @param string|null $scheme URL scheme override.
+     */
     function actionUrl(string $path = '', array $params = [], ?string $scheme = null): string
     {
-        return UrlHelper::actionUrl($path, $params, $scheme);
+        return \craft\helpers\UrlHelper::actionUrl($path, $params, $scheme);
     }
 }
 
 if (!function_exists('alias')) {
+    /**
+     * Resolve a Yii alias.
+     */
     function alias(string $alias): string
     {
         return \Craft::getAlias($alias);
@@ -67,6 +91,11 @@ if (!function_exists('alias')) {
 
 // clone is a reserved keyword; provide clone_var instead
 if (!function_exists('clone_var')) {
+    /**
+     * Clone a variable using Craft's Twig extension implementation.
+     *
+     * Useful for duplicating arrays/objects in template context.
+     */
     function clone_var(mixed $var): mixed
     {
         global $__extension;
@@ -75,6 +104,11 @@ if (!function_exists('clone_var')) {
 }
 
 if (!function_exists('collect')) {
+    /**
+     * Create an Illuminate collection.
+     *
+     * @return \Illuminate\Support\Collection
+     */
     function collect(mixed $var): \Illuminate\Support\Collection
     {
         global $__extension;
@@ -85,6 +119,12 @@ if (!function_exists('collect')) {
 }
 
 if (!function_exists('configure')) {
+    /**
+     * Configure an object by setting properties.
+     *
+     * @param object $object
+     * @param array<string, mixed> $properties
+     */
     function configure(object $object, array $properties): object
     {
         return \Craft::configure($object, $properties);
@@ -92,13 +132,25 @@ if (!function_exists('configure')) {
 }
 
 if (!function_exists('cpUrl')) {
+    /**
+     * Generate a control panel URL.
+     *
+     * @param string $path
+     * @param array<string, mixed> $params
+     * @param string|null $scheme
+     */
     function cpUrl(string $path = '', array $params = [], ?string $scheme = null): string
     {
-        return UrlHelper::cpUrl($path, $params, $scheme);
+        return \craft\helpers\UrlHelper::cpUrl($path, $params, $scheme);
     }
 }
 
 if (!function_exists('create')) {
+    /**
+     * Create a Craft object from a config array/class string.
+     *
+     * @param array|string $config
+     */
     function create(array|string $config): mixed
     {
         return \Craft::createObject($config);
@@ -106,7 +158,13 @@ if (!function_exists('create')) {
 }
 
 if (!function_exists('dataUrl')) {
-    function dataUrl(Asset|string $file, ?string $mimeType = null): string
+    /**
+     * Create a data URL (base64) for an asset or file.
+     *
+     * @param \craft\elements\Asset|string $file
+     * @param string|null $mimeType
+     */
+    function dataUrl(\craft\elements\Asset|string $file, ?string $mimeType = null): string
     {
         global $__extension;
         return $__extension->dataUrlFunction($file, $mimeType);
@@ -114,6 +172,11 @@ if (!function_exists('dataUrl')) {
 }
 
 if (!function_exists('dump')) {
+    /**
+     * Dump variables for debugging.
+     *
+     * Returns the dump output as a string so it can be echoed from templates.
+     */
     function dump(...$vars): string
     {
         global $__extension;
@@ -123,14 +186,24 @@ if (!function_exists('dump')) {
 }
 
 if (!function_exists('encodeUrl')) {
-    function encodeUrl(string $url): string
+    /**
+     * Encode a URL.
+     *
+     * Wrapper around UrlHelper::encodeUrl().
+     */
+    function encodeUrl(string $url)
     {
-        return UrlHelper::encodeUrl($url);
+        return \craft\helpers\UrlHelper::encodeUrl($url);
     }
 }
 
 if (!function_exists('entryType')) {
-    function entryType(string $handle): EntryType
+    /**
+     * Resolve an entry type by handle.
+     *
+     * @return \craft\models\EntryType
+     */
+    function entryType(string $handle)
     {
         global $__extension;
         return $__extension->entryTypeFunction($handle);
@@ -138,7 +211,12 @@ if (!function_exists('entryType')) {
 }
 
 if (!function_exists('expression')) {
-    function expression(mixed $expression, array $params = [], array $config = []): Expression
+    /**
+     * Create a DB Expression.
+     *
+     * @return \yii\db\Expression
+     */
+    function expression(mixed $expression, array $params = [], array $config = [])
     {
         global $__extension;
         return $__extension->expressionFunction($expression, $params, $config);
@@ -146,6 +224,9 @@ if (!function_exists('expression')) {
 }
 
 if (!function_exists('fieldValueSql')) {
+    /**
+     * Return the SQL expression for a field value.
+     */
     function fieldValueSql(\craft\base\FieldLayoutProviderInterface $provider, string $fieldHandle, ?string $key = null): ?string
     {
         global $__extension;
@@ -154,6 +235,14 @@ if (!function_exists('fieldValueSql')) {
 }
 
 if (!function_exists('gql')) {
+    /**
+     * Execute a GraphQL query against Craft.
+     *
+     * @param string $query
+     * @param array|null $variables
+     * @param string|null $operationName
+     * @return array<mixed>
+     */
     function gql(string $query, ?array $variables = null, ?string $operationName = null): array
     {
         global $__extension;
@@ -162,6 +251,9 @@ if (!function_exists('gql')) {
 }
 
 if (!function_exists('plugin')) {
+    /**
+     * Get a plugin instance by handle.
+     */
     function plugin(string $handle): ?\craft\base\PluginInterface
     {
         global $__extension;
@@ -170,17 +262,28 @@ if (!function_exists('plugin')) {
 }
 
 if (!function_exists('seq')) {
+    /**
+     * Generate (or read) a per-request sequence value.
+     *
+     * @param string $name
+     * @param int|null $length
+     * @param bool $next When true returns next value, otherwise returns current.
+     * @return int|string
+     */
     function seq(string $name, ?int $length = null, bool $next = true): int|string
     {
         global $__extension;
         if ($next) {
             return $__extension->seqFunction($name, $length);
         }
-        return Sequence::current($name, $length);
+        return \craft\helpers\Sequence::current($name, $length);
     }
 }
 
 if (!function_exists('shuffle_arr')) {
+    /**
+     * Shuffle an iterable into a randomized array.
+     */
     function shuffle_arr(iterable $arr): array
     {
         global $__extension;
@@ -189,114 +292,205 @@ if (!function_exists('shuffle_arr')) {
 }
 
 if (!function_exists('siteUrl')) {
+    /**
+     * Generate a site URL.
+     *
+     * @param string $path
+     * @param array<string, mixed> $params
+     * @param string|null $scheme
+     * @param string|null $siteId
+     */
     function siteUrl(string $path = '', array $params = [], ?string $scheme = null, ?string $siteId = null): string
     {
-        return UrlHelper::siteUrl($path, $params, $scheme, $siteId);
+        return \craft\helpers\UrlHelper::siteUrl($path, $params, $scheme, $siteId);
     }
 }
 
 if (!function_exists('url')) {
+    /**
+     * Generate a URL.
+     *
+     * @param string $path
+     * @param array<string, mixed> $params
+     * @param string|null $scheme
+     */
     function url(string $path = '', array $params = [], ?string $scheme = null): string
     {
-        return UrlHelper::url($path, $params, $scheme);
+        return \craft\helpers\UrlHelper::url($path, $params, $scheme);
     }
 }
 
-// Element authorization wrappers
 if (!function_exists('canCreateDrafts')) {
-    function canCreateDrafts(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    /**
+     * Whether a user can create drafts for the given element.
+     *
+     * @param \craft\base\ElementInterface $element
+     * @param \craft\elements\User|null $user
+     */
+    function canCreateDrafts($element, ?\craft\elements\User $user = null): bool
     {
         return \Craft::$app->getElements()->canCreateDrafts($element, $user);
     }
 }
+
 if (!function_exists('canDelete')) {
-    function canDelete(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    /**
+     * Whether a user can delete the given element.
+     *
+     * @param \craft\base\ElementInterface $element
+     * @param \craft\elements\User|null $user
+     */
+    function canDelete($element, ?\craft\elements\User $user = null): bool
     {
         return \Craft::$app->getElements()->canDelete($element, $user);
     }
 }
+
 if (!function_exists('canDeleteForSite')) {
-    function canDeleteForSite(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    /**
+     * Whether a user can delete the given element for a particular site.
+     *
+     * @param \craft\base\ElementInterface $element
+     * @param \craft\elements\User|null $user
+     */
+    function canDeleteForSite($element, ?\craft\elements\User $user = null): bool
     {
         return \Craft::$app->getElements()->canDeleteForSite($element, $user);
     }
 }
+
 if (!function_exists('canDuplicate')) {
-    function canDuplicate(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    /**
+     * Whether a user can duplicate the given element.
+     *
+     * @param \craft\base\ElementInterface $element
+     * @param \craft\elements\User|null $user
+     */
+    function canDuplicate($element, ?\craft\elements\User $user = null): bool
     {
         return \Craft::$app->getElements()->canDuplicate($element, $user);
     }
 }
+
 if (!function_exists('canSave')) {
-    function canSave(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    /**
+     * Whether a user can save the given element.
+     */
+    function canSave(\craft\base\ElementInterface $element, ?\craft\elements\User $user = null): bool
     {
         return \Craft::$app->getElements()->canSave($element, $user);
     }
 }
+
 if (!function_exists('canView')) {
-    function canView(ElementInterface $element, ?\craft\elements\User $user = null): bool
+    /**
+     * Whether a user can view the given element.
+     */
+    function canView(\craft\base\ElementInterface $element, ?\craft\elements\User $user = null): bool
     {
         return \Craft::$app->getElements()->canView($element, $user);
     }
 }
 
-// HTML generation wrappers
 if (!function_exists('actionInput')) {
+    /**
+     * Render Craft's `action` hidden input.
+     */
     function actionInput(string $action, array $params = []): string
     {
-        return Html::actionInput($action, $params);
+        return \craft\helpers\Html::actionInput($action, $params);
     }
 }
+
 if (!function_exists('attr')) {
+    /**
+     * Render HTML tag attributes from an array.
+     *
+     * @param array<string, mixed> $attributes
+     */
     function attr(array $attributes): string
     {
-        return Html::renderTagAttributes($attributes);
+        return \craft\helpers\Html::renderTagAttributes($attributes);
     }
 }
+
 if (!function_exists('csrfInput')) {
+    /**
+     * Render a CSRF hidden input.
+     */
     function csrfInput(): string
     {
-        return Html::csrfInput();
+        return \craft\helpers\Html::csrfInput();
     }
 }
+
 if (!function_exists('failMessageInput')) {
+    /**
+     * Render a fail message input.
+     */
     function failMessageInput(?string $message = null): string
     {
-        return Html::failMessageInput($message);
+        return \craft\helpers\Html::failMessageInput($message);
     }
 }
+
 if (!function_exists('hiddenInput')) {
+    /**
+     * Render a hidden input.
+     */
     function hiddenInput(string $name, ?string $value = null, array $options = []): string
     {
-        return Html::hiddenInput($name, $value, $options);
+        return \craft\helpers\Html::hiddenInput($name, $value, $options);
     }
 }
+
 if (!function_exists('input')) {
+    /**
+     * Render an input.
+     */
     function input(string $type, ?string $name = null, ?string $value = null, array $options = []): string
     {
-        return Html::input($type, $name, $value, $options);
+        return \craft\helpers\Html::input($type, $name, $value, $options);
     }
 }
+
 if (!function_exists('ol')) {
+    /**
+     * Render an ordered list.
+     */
     function ol(array $items, array $attributes = []): string
     {
-        return Html::ol($items, $attributes);
+        return \craft\helpers\Html::ol($items, $attributes);
     }
 }
+
 if (!function_exists('redirectInput')) {
+    /**
+     * Render a redirect input.
+     */
     function redirectInput(string $url): string
     {
-        return Html::redirectInput($url);
+        return \craft\helpers\Html::redirectInput($url);
     }
 }
+
 if (!function_exists('successMessageInput')) {
+    /**
+     * Render a success message input.
+     */
     function successMessageInput(?string $message = null): string
     {
-        return Html::successMessageInput($message);
+        return \craft\helpers\Html::successMessageInput($message);
     }
 }
+
 if (!function_exists('svg')) {
-    function svg(Asset|string $svg, ?bool $sanitize = null, ?bool $namespace = null, ?string $class = null): string
+    /**
+     * Render an SVG asset or string.
+     *
+     * Note: `$class` is deprecated but kept for backwards compatibility.
+     */
+    function svg(\craft\elements\Asset|string $svg, ?bool $sanitize = null, ?bool $namespace = null, ?string $class = null): string
     {
         global $__extension;
         $markup = $__extension->svgFunction($svg, $sanitize, $namespace);
@@ -305,8 +499,8 @@ if (!function_exists('svg')) {
         if ($class !== null) {
             \Craft::$app->getDeprecator()->log('svg()-class', 'The `class` argument of the `svg()` helper has been deprecated. Use attr filter/helpers instead.');
             try {
-                $markup = Html::modifyTagAttributes($markup, ['class' => $class]);
-            } catch (InvalidArgumentException $e) {
+                $markup = \craft\helpers\Html::modifyTagAttributes($markup, ['class' => $class]);
+            } catch (\yii\base\InvalidArgumentException $e) {
                 \Craft::warning('Unable to add a class to the SVG: ' . $e->getMessage(), __METHOD__);
             }
         }
@@ -315,30 +509,44 @@ if (!function_exists('svg')) {
     }
 }
 if (!function_exists('tag')) {
+    /**
+     * Render an HTML tag.
+     *
+     * Delegates to Craft's Twig extension `tag` function.
+     *
+     * @param string $type Tag name.
+     * @param array<string, mixed> $attributes
+     */
     function tag(string $type, array $attributes = []): string
     {
         global $__extension;
-
-
-
         return $__extension->tagFunction($type, $attributes);
     }
 }
 
 // DOM event wrappers (no-op if not used in Blade context)
 if (!function_exists('head')) {
+    /**
+     * Output/queue the document <head> contents.
+     */
     function head(): void
     {
         \Craft::$app->getView()->head();
     }
 }
 if (!function_exists('beginBody')) {
+    /**
+     * Begin the document <body> section.
+     */
     function beginBody(): void
     {
         \Craft::$app->getView()->beginBody();
     }
 }
 if (!function_exists('endBody')) {
+    /**
+     * End the document <body> section.
+     */
     function endBody(): void
     {
         \Craft::$app->getView()->endBody();
@@ -375,8 +583,8 @@ if (!function_exists('__')) {
         }
 
         try {
-            return Craft::t($category, (string)$message, $params, $language);
-        } catch (InvalidConfigException) {
+            return \Craft::t($category, (string)$message, $params, $language);
+        } catch (\yii\base\InvalidConfigException) {
             return $message;
         }
     }

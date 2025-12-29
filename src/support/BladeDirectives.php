@@ -8,8 +8,12 @@ use wsydney76\blade\Blade;
 /**
  * Registers and compiles custom Blade directives.
  *
- *  Note: AI generated from Craft's Twig extension. Provided as is. May contain bugs.
- *  Please review and test before use.
+ * These directives are compiled into PHP at Blade compile-time.
+ *
+ * Notes:
+ * - Directive handlers receive the raw expression string from the template.
+ * - Most directives return a PHP snippet (string) that Blade injects into the compiled template.
+ * - Some directives have side effects (e.g. redirect/header) and should be used with care.
  */
 class BladeDirectives
 {
@@ -18,16 +22,19 @@ class BladeDirectives
      */
     public static function register(): void
     {
-        // Render Twig directive
+        // Render a Twig template and echo the result.
+        // Example: @renderTwig('partials/_thing', ['foo' => 'bar'])
         Blade::directive('renderTwig', function($expression) {
             return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
         });
 
-        // includeLocalized directive using extracted compiler method
+        // Render first existing view from: `{siteHandle}.{view}` then `{view}`.
+        // Example: @includeLocalized('partials.meta', ['entry' => $entry])
         Blade::directive('includeLocalized', function($expression) {
             return static::compileIncludeLocalized($expression);
         });
 
+        // Guard directives (throw Yii HTTP exceptions)
         Blade::directive('requireAdmin', function($expression) {
             return "<?php if (!\\Craft::\$app->getUser()->getIsAdmin()) { throw new \\yii\\web\\ForbiddenHttpException('Admin access required.'); } ?>";
         });
@@ -44,25 +51,31 @@ class BladeDirectives
             return "<?php if (!\\Craft::\$app->getUser()->checkPermission($expression)) { throw new \\yii\\web\\ForbiddenHttpException('Insufficient permissions.'); } ?>";
         });
 
+        // Redirect and end the request.
+        // Example: @redirect('/login', 302)
         Blade::directive('redirect', function($expression) {
             return static::compileRedirect($expression);
         });
 
+        // Execute arbitrary PHP expression/assignment.
+        // Example: @set($foo = 'bar')
         Blade::directive('set', function($expression) {
             return "<?php {$expression}; ?>";
         });
 
+        // Create a paginator and export results + pageInfo into the template scope.
+        // Example: @paginate($query, 'elements', 'pageInfo', ['pageSize' => 10])
         Blade::directive('paginate', function($expression) {
             return static::compilePaginate($expression);
         });
 
-        // markdown directive for combining markdown and purify
+        // Convert Markdown -> HTML and then purify.
         Blade::directive('markdown', function($expression) {
             return static::compileMarkdown($expression);
         });
 
-        // header directive (matches Craft’s Twig {% header %} tag behavior)
-        // Usage: @header("Cache-Control: max-age=" . ($expiry->timestamp - $now->timestamp))
+        // Set a single response header.
+        // Usage: @header("Cache-Control: max-age=3600")
         Blade::directive('header', function($expression) {
             return static::compileHeader($expression);
         });
@@ -70,10 +83,14 @@ class BladeDirectives
 
     /**
      * Compiler for the includeLocalized directive.
-     * Builds a PHP snippet that attempts site-specific template first, then falls back.
      *
-     * @param string $expression The directive expression
-     * @return string The compiled PHP code
+     * Expression formats supported:
+     * - @includeLocalized('meta')
+     * - @includeLocalized('meta', ['entry' => $entry])
+     * - @includeLocalized(['meta', ['entry' => $entry]])
+     *
+     * The compiled template uses the Illuminate view environment (`$__env`) and calls:
+     * `$__env->first([...])->render()`.
      */
     public static function compileIncludeLocalized(string $expression): string
     {
@@ -115,10 +132,9 @@ PHP;
 
     /**
      * Compiler for the paginate directive.
-     * Creates a paginator for an ElementQuery and makes page info and results available.
      *
-     * @param string $expression The directive expression
-     * @return string The compiled PHP code
+     * Side-effect: defines variables into template scope via variable-variables
+     * (e.g. `$elements` and `$pageInfo`).
      */
     public static function compilePaginate(string $expression): string
     {
@@ -156,11 +172,8 @@ PHP;
 
     /**
      * Compiler for the markdown directive.
-     * Combines markdown processing with HTML purification.
-     * Usage: @markdown($text, $purifierConfig)
      *
-     * @param string $expression The directive expression
-     * @return string The compiled PHP code
+     * Uses the global helper functions `markdown()` and `purify()` provided by BladeFilters.
      */
     public static function compileMarkdown(string $expression): string
     {
@@ -179,6 +192,13 @@ PHP;
         return \sprintf($template, $expression);
     }
 
+    /**
+     * Compiler for the redirect directive.
+     *
+     * Side-effects:
+     * - Sets a redirect response
+     * - Calls `Craft::$app->end()` (terminates the request)
+     */
     private static function compileRedirect(string $expression): string
     {
         $template = <<<'PHP'
@@ -208,6 +228,11 @@ PHP;
         return \sprintf($template, $expression);
     }
 
+    /**
+     * Compiler for the header directive.
+     *
+     * Expects a single string argument containing `Header-Name: value`.
+     */
     private static function compileHeader($expression)
     {
         $template = <<<'PHP'

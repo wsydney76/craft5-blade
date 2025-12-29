@@ -5,32 +5,26 @@ namespace wsydney76\blade\support;
 use Illuminate\Container\Container;
 
 /**
- * Custom service container for Blade that extends Laravel's Container.
+ * Custom service container for the Blade runtime.
  *
- * Provides Laravel-specific functionality needed by Blade without requiring a full Laravel application.
+ * Blade (and some of its component/tag features) expect to run inside a Laravel application.
+ * Craft isn't a Laravel app, so we provide a minimal container implementation that satisfies the
+ * pieces Blade tries to call.
+ *
+ * In particular, some component resolution paths call `$app->getNamespace()`.
  */
 class CraftContainer extends Container
 {
     /**
      * Return the application namespace used by Blade when resolving component classes.
      *
-     * Default Laravel apps use 'App\\' as the root namespace.
-     * Adjust if you want to resolve components from a different base.
-     * This comes into play when using custom directives like @datetime or components like <x-...>
+     * Default Laravel apps use `App\\` as the root namespace.
+     * Change this if your project stores component classes elsewhere.
      *
-     * Note: This is a monkey patch, avoiding handling a full Laravel application just for this.
-     * The 'correct' way would be use a full Application class extending Illuminate\Foundation\Application
-     *
-     * composer require laravel/framework
-     * use Illuminate\Foundation\Application;
-     * $app = new Application(__DIR__);
-     *
-     * @return string The application namespace for component resolution
+     * @return string Application namespace prefix for component resolution.
      */
     public function getNamespace(): string
     {
-
         return 'App\\';
     }
 }
-
