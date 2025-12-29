@@ -4,6 +4,14 @@ Enables Laravel Blade templates for Craft CMS, providing a modern templating eng
 
 Readme work in progress (and partially AI generated, so...).
 
+## Motivation
+
+A client is considering porting a Laravel application to Craft (multi-site, drafts, etc.) that has a large number of Blade templates. This plugin is intended to simplify the evaluation and enable a step-by-step approach.
+
+It is not intended to be a comprehensive or permanent solution, but merely to support this specific project.
+
+Functionality will only be fixed or improved as needed.
+
 ## Requirements
 
 This plugin requires Craft CMS 5.8.0 or later, and PHP 8.2 or later.
