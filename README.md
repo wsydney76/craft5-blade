@@ -387,7 +387,7 @@ The plugin registers a **site route** that can render a Blade view directly from
 This is mainly used for routes that do not correspond to Craft elements, e.g. static pages or special endpoints.
 
 - Default prefix: `blade`
-- Config key: `routePrefix` (plugin settings / `config/_blade.php`)
+- Config key: `bladeRoutePrefix` (plugin settings / `config/_blade.php`)
 
 Examples (default prefix):
 
@@ -404,7 +404,7 @@ To customize the prefix, add this to `config/_blade.php`:
 ```php
 return [
     // ...
-    'routePrefix' => 'views',
+    'bladeRoutePrefix' => 'views',
 ];
 ```
 
@@ -757,6 +757,7 @@ return [
     'bladeComponentPaths' => [
         ['path' => '@templates/_shared', 'prefix' => 'shared'],
     ],
+    'bladeViewPrefix' => 'views'
 ];
 ```
 
@@ -765,8 +766,9 @@ where:
 * `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
 * `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
 * `bladeComponentPaths` - Additional component paths with (optional) prefixes, defaults to empty array. In this example, you could use `<x-shared:mycomponent />` to reference a component in `@templates/_shared/mycomponent.blade.php`.
+* `bladeViewPrefix` - Prefix for URL routes pointing directly to Blade templates, defaults to `blade`.
 
-Values support Craft aliases.
+* Path values support Craft aliases.
 
 
 ## Reactive components

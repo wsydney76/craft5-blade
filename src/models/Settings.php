@@ -42,7 +42,7 @@ class Settings extends Model
      *
      * Must be a single URL segment (no slashes).
      */
-    public string $routePrefix = 'blade';
+    public string $bladeRoutePrefix = 'blade';
 
     /**
      * Anonymous component paths.
