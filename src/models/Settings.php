@@ -35,6 +35,16 @@ class Settings extends Model
     public string $bladeViewsSubdir = '';
 
     /**
+     * Site route prefix for the view-rendering endpoint.
+     *
+     * With the default `blade`, URLs like `/blade/articles/list` will render the Blade view
+     * `articles.list` (slashes are converted to dots).
+     *
+     * Must be a single URL segment (no slashes).
+     */
+    public string $routePrefix = 'blade';
+
+    /**
      * Anonymous component paths.
      *
      * Each item should be an array like:
@@ -48,6 +58,11 @@ class Settings extends Model
     protected function defineRules(): array
     {
         return array_merge(parent::defineRules(), [
+            ['routePrefix', 'required'],
+            ['routePrefix', 'string'],
+            ['routePrefix', 'trim'],
+            // Keep it to a single URL segment (letters/numbers/dash/underscore).
+            ['routePrefix', 'match', 'pattern' => '/^[a-z0-9][a-z0-9_-]*$/i'],
             // ...
         ]);
     }

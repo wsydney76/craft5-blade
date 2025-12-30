@@ -107,6 +107,8 @@ Create your Blade templates in the `resources/views` directory (or the path conf
 
 Template cache is stored in `storage/runtime/blade/cache` (or the path configured in `config/_blade.php`).
 
+That would make `/views/articles/list/bydate` render `articles.list.bydate`.
+
 ### Creating Blade Templates
 
 Create `.blade.php` files in your views directory:
@@ -377,6 +379,38 @@ The current element can be accessed via `Craft::$app->urlManager->getMatchedElem
 The current element is available in Blade automatically:
 
 - It’s injected into the view context based on the element’s short class name (lowercased), e.g. `Entry` → `$entry`, `Product` → `$product`.
+
+### Direct URL rendering route (`/{prefix}/{view}`)
+
+The plugin registers a **site route** that can render a Blade view directly from a URL.
+
+This is mainly used for routes that do not correspond to Craft elements, e.g. static pages or special endpoints.
+
+- Default prefix: `blade`
+- Config key: `routePrefix` (plugin settings / `config/_blade.php`)
+
+Examples (default prefix):
+
+- `/blade/articles` renders Blade view `articles`
+- `/blade/articles/list/bydate` renders Blade view `articles.list.bydate`
+
+Notes:
+
+- The `{view}` portion is treated as a slash-delimited path and is normalized to a dotted view name.
+- The endpoint is anonymous by default (see `BaseBladeController::$allowAnonymous`). Don't expose views that should require authentication.
+
+To customize the prefix, add this to `config/_blade.php`:
+
+```php
+return [
+    // ...
+    'routePrefix' => 'views',
+];
+```
+
+### Using custom controller actions
+
+Custom controller actions can be setup using the usual Craft mechanisms and finally render Blade templates using `Blade::render()`.
 
 ### Template Localization
 

@@ -11,9 +11,11 @@ use craft\elements\Entry;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterTemplateRootsEvent;
 use craft\events\SetElementRouteEvent;
+use craft\events\RegisterUrlRulesEvent;
 use craft\helpers\App;
 use craft\helpers\FileHelper;
 use craft\utilities\ClearCaches;
+use craft\web\UrlManager;
 use craft\web\View;
 use wsydney76\blade\models\Settings;
 use wsydney76\blade\support\BladeDirectives;
@@ -93,6 +95,24 @@ class BladePlugin extends Plugin
             View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
             function(RegisterTemplateRootsEvent $event): void {
                 $event->roots['@blade'] = __DIR__ . '/templates';
+            }
+        );
+
+        // Register a simple site route so you can render a Blade view directly by URL.
+        //
+        // Examples (default prefix: `blade`):
+        // - `/blade/articles` => `articles`
+        // - `/blade/articles/list/bydate` => `articles.list.bydate`
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+            function(RegisterUrlRulesEvent $event): void {
+                $settings = $this->getSettings();
+                $prefix = $settings instanceof Settings ? trim($settings->routePrefix) : 'blade';
+                $prefix = $prefix !== '' ? $prefix : 'blade';
+
+                // `{view}` is captured as a slash-delimited path; the controller will sanitize it.
+                $event->rules[$prefix . '/<view:.+>'] = '_blade/base-blade/render';
             }
         );
 

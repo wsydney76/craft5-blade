@@ -166,6 +166,31 @@ If you’re in Blade and want to reuse an existing Twig partial:
 2. `BladeDirectives` compiles this into PHP that calls `Craft::$app->view->renderTemplate(...)`.
 3. The Twig template is rendered by Craft and echoed into the Blade output.
 
+### Flow E: Direct site route → Blade template (`/{routePrefix}/{view}`)
+
+The plugin also registers a plain **site URL rule** that routes matching requests directly to a Blade view via `BaseBladeController::actionRender()`.
+
+Registration happens in `BladePlugin::attachEventHandlers()` via `UrlManager::EVENT_REGISTER_SITE_URL_RULES`.
+
+- Route pattern: `/{routePrefix}/{view}`
+- Controller route: `_blade/base-blade/render`
+- Settings:
+  - `Settings::$routePrefix` (default: `blade`)
+
+Examples (default prefix):
+
+- `/blade/articles` → renders view `articles`
+- `/blade/articles/list/bydate` → renders view `articles.list.bydate`
+
+`{view}` is captured as a slash path (so nested URLs work). `BaseBladeController::actionRender()` normalizes it by converting slashes to dots and validating the name to prevent traversal-like input.
+
+Security note: `BaseBladeController` allows anonymous access by default so this can be used for public site templates. If you render sensitive views, lock it down.
+
+### Flow F: Custom controller → Blade template
+
+Custom controller actions can be setup using the usual Craft mechanisms and finally render Blade templates using `Blade::render()`.
+
+
 ## Global variables and shared state
 
 ### Craft globals in Blade (`BladeShared`)
