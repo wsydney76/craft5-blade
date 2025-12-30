@@ -55,7 +55,7 @@ Run `ddev craft plugin/install _blade`.
 ## Limitations
 
 - Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
-- Does not offer equivalent functionality for advanced Craft Twig features, e.g.`cache` or `nav` twig tags.
+- Does not offer equivalent functionality for some advanced Craft Twig features/tags (e.g. `nav`).
 - Does not fully support [Template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization)
 - For now, only used for entry element type. Should work with other element types but not yet tested.
 - IDE support for Blade templates in Craft projects may be limited compared to Twig, e.g. there is no code completion for custom fields.
@@ -149,6 +149,8 @@ The following Blade directives are predefined:
 - `@requireGuest` - Require the user to be logged out (throws 403 otherwise)
 - `@redirect($url, $statusCode=302)` - Redirects to a given URL (throws a redirect response).
 - `@header($headerLine)` - Sets an HTTP response header, matching Craft’s Twig `{% header %}` tag compiler behavior
+- `@cache($options = []) ... @endcache` - Template fragment caching (Craft’s Twig `{% cache %}` equivalent)
+
 
 ### Components
 
@@ -480,6 +482,44 @@ Both methods provide `$posts` with the page results and `$pageInfo` with paginat
     @endif
 </p>
 ```
+
+#### Template fragment caching (`@cache ... @endcache`)
+
+Experimental.
+
+The `@cache` directive pair mirrors Craft’s Twig `{% cache %}` tag behavior.
+
+Basic usage (no options):
+
+```blade
+@cache
+    ... the content to cache ...
+@endcache
+```
+
+With options (all keys optional):
+
+```blade
+@cache([
+    'key' => 'thekey',                    // {% cache using key "page-header" %}
+    'global' => true,                     // {% cache globally %}
+    'duration' => '3 weeks',              // {% cache for 3 weeks %}
+    'expiration' => $entry->eventDate,    // {% cache until entry.eventDate %}
+])
+    ... the content to cache ...
+@endcache
+```
+
+Options:
+
+- `key` (string): Cache key override. If omitted, a deterministic key is generated.
+- `global` (bool): Whether the cache is global. Default: `false`.
+- `duration` (?string): Cache duration (e.g. `'1 hour'`). Default: `null`.
+- `expiration` (mixed): Explicit expiration value (timestamp/DateTime/etc.). Default: `null`.
+
+
+
+Note: Uses Craft's TemplateCaches service under the hood, so (in theory) should behave the same, include cache invalidation.
 
 ### Accessing Craft Global Variables
 

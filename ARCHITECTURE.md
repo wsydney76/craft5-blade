@@ -205,17 +205,39 @@ Included directives (non-exhaustive):
 - `@paginate(...)` — uses `Blade::paginate()` and injects variables into scope
 - `@markdown(...)` — uses global `markdown()` and `purify()` helper functions
 - `@header("Header: value")` — sets a response header
+- `@cache($options = []) ... @endcache` — template fragment caching using Craft’s TemplateCaches service (Twig `{% cache %}` equivalent)
 
 Security note: directives like `@set` and `@redirect` are powerful. Use them in trusted templates only.
 
-### Conditionals (`BladeIfs`)
+#### Template fragment caching (`@cache ... @endcache`)
 
-Provides Laravel-style conditionals:
+The `@cache` directive pair is implemented in `support/BladeDirectives.php` and compiles to the same structure Craft generates for Twig’s `{% cache %}` tag:
 
-- `@auth ... @endauth`
-- `@guest ... @endguest`
+- Uses `Craft::$app->getTemplateCaches()` and `Craft::$app->getRequest()`.
+- Skips caching for Live Preview and tokenized requests (`getIsLivePreview()` / `getToken()`).
+- Wraps the cached block in `ob_start()` / `ob_get_clean()`.
+- Saves and returns the fragment with `endTemplateCache(...)`.
 
-These are backed by Craft’s user session state.
+Usage:
+
+```blade
+@cache
+    Hallo
+@endcache
+```
+
+Options (`@cache([...])`), all optional:
+
+- `key` (string): override cache key; if omitted, a deterministic key is generated
+- `global` (bool): passed through to `getTemplateCache`/`startTemplateCache`/`endTemplateCache` (default `false`)
+- `duration` (?string): passed to `endTemplateCache` (default `null`)
+- `expiration` (mixed): passed to `endTemplateCache` (default `null`)
+
+Under the hood the compiled PHP calls:
+
+- `getTemplateCache($key, $global, true)`
+- `startTemplateCache(true, $global)`
+- `endTemplateCache($key, $global, $duration, $expiration, $body, true)`
 
 ## Template resolution and naming
 
