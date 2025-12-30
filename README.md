@@ -501,12 +501,24 @@ With options (all keys optional):
 
 ```blade
 @cache([
-    'key' => 'thekey',                    // {% cache using key "page-header" %}
-    'global' => true,                     // {% cache globally %}
-    'duration' => '3 weeks',              // {% cache for 3 weeks %}
-    'expiration' => $entry->eventDate,    // {% cache until entry.eventDate %}
+    'key' => 'thekey',
+    'global' => true,
+    'duration' => '1 hour',
+    'expiration' => 1735689600,
 ])
-    ... the content to cache ...
+    Hallo
+@endcache
+```
+
+Conditional caching (Craft Twig `{% cache if ... %}` / `{% cache unless ... %}` equivalents):
+
+```blade
+@cache(['if' => craft()->app->request->isMobileBrowser()])
+    This is only cached for mobile browsers.
+@endcache
+
+@cache(['unless' => $currentUser])
+    This is cached unless a user is logged in.
 @endcache
 ```
 
@@ -516,7 +528,8 @@ Options:
 - `global` (bool): Whether the cache is global. Default: `false`.
 - `duration` (?string): Cache duration (e.g. `'1 hour'`). Default: `null`.
 - `expiration` (mixed): Explicit expiration value (timestamp/DateTime/etc.). Default: `null`.
-
+- `if` (mixed): Only use the cache when this is truthy.
+- `unless` (mixed): Only use the cache when this is falsey.
 
 
 Note: Uses Craft's TemplateCaches service under the hood, so (in theory) should behave the same, include cache invalidation.

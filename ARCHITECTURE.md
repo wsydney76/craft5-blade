@@ -218,6 +218,15 @@ The `@cache` directive pair is implemented in `support/BladeDirectives.php` and 
 - Wraps the cached block in `ob_start()` / `ob_get_clean()`.
 - Saves and returns the fragment with `endTemplateCache(...)`.
 
+Options (`@cache([...])`), all optional:
+
+- `key` (string): override cache key; if omitted, a deterministic key is generated
+- `global` (bool): passed through to `getTemplateCache`/`startTemplateCache`/`endTemplateCache` (default `false`)
+- `duration` (?string): passed to `endTemplateCache` (default `null`)
+- `expiration` (mixed): passed to `endTemplateCache` (default `null`)
+- `if` (mixed): only use caching when truthy (Craft Twig `{% cache if ... %}` equivalent)
+- `unless` (mixed): only use caching when falsey (Craft Twig `{% cache unless ... %}` equivalent)
+
 Usage:
 
 ```blade
@@ -225,13 +234,6 @@ Usage:
     Hallo
 @endcache
 ```
-
-Options (`@cache([...])`), all optional:
-
-- `key` (string): override cache key; if omitted, a deterministic key is generated
-- `global` (bool): passed through to `getTemplateCache`/`startTemplateCache`/`endTemplateCache` (default `false`)
-- `duration` (?string): passed to `endTemplateCache` (default `null`)
-- `expiration` (mixed): passed to `endTemplateCache` (default `null`)
 
 Under the hood the compiled PHP calls:
 

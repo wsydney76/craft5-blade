@@ -280,10 +280,15 @@ PHP;
     $__bladeCacheService = \Craft::$app->getTemplateCaches();
     $__bladeCacheRequest = \Craft::$app->getRequest();
 
-    static $__bladeCacheCounter = 0;
-    $__bladeCacheCounter++;
+    // Use a global counter to avoid "Duplicate declaration of static variable" when multiple @cache blocks
+    // exist in the same compiled template.
+    $__bladeCacheCounterKey = '__wsydney76_blade_cache_counter';
+    if (!isset($GLOBALS[$__bladeCacheCounterKey]) || !is_int($GLOBALS[$__bladeCacheCounterKey])) {
+        $GLOBALS[$__bladeCacheCounterKey] = 0;
+    }
+    $GLOBALS[$__bladeCacheCounterKey]++;
 
-    $__bladeCacheI = $__bladeCacheCounter;
+    $__bladeCacheI = $GLOBALS[$__bladeCacheCounterKey];
 
     // Options (all optional): ['key' => string, 'global' => bool, 'duration' => ?string, 'expiration' => mixed]
     $__bladeCacheOptions = %s;
@@ -295,9 +300,11 @@ PHP;
     $__bladeCacheGlobal = (bool)($__bladeCacheOptions['global'] ?? false);
     $__bladeCacheDuration = $__bladeCacheOptions['duration'] ?? null;
     $__bladeCacheExpiration = $__bladeCacheOptions['expiration'] ?? null;
+    $__bladeCacheIf = $__bladeCacheOptions['if'] ?? true;
+    $__bladeCacheUnless = $__bladeCacheOptions['unless'] ?? false;
 
     // Match Craft's ignore conditions (live preview or tokenized preview requests)
-    ${"__bladeIgnoreCache{$__bladeCacheI}"} = ($__bladeCacheRequest->getIsLivePreview() || $__bladeCacheRequest->getToken());
+    ${"__bladeIgnoreCache{$__bladeCacheI}"} = ($__bladeCacheRequest->getIsLivePreview() || $__bladeCacheRequest->getToken()) || (!($__bladeCacheIf) || ($__bladeCacheUnless));
 
     if (!${"__bladeIgnoreCache{$__bladeCacheI}"}) {
         // Cache key: allow explicit override, otherwise use deterministic key
@@ -361,7 +368,9 @@ PHP;
         $__bladeCacheGlobal,
         $__bladeCacheDuration,
         $__bladeCacheExpiration,
-        $__bladeCacheKeyValue
+        $__bladeCacheKeyValue,
+        $__bladeCacheIf,
+        $__bladeCacheUnless
     );
 ?>
 PHP;
