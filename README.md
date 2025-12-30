@@ -4,6 +4,8 @@ Enables Laravel Blade templates for Craft CMS, providing a modern templating eng
 
 Readme work in progress (and partially AI generated, so...).
 
+See [Architecture Overview](./ARCHITECTURE.md) for implementation details.
+
 ## Motivation
 
 A client is considering porting a Laravel application to Craft (multi-site, drafts, etc.) that has a large number of Blade templates. This plugin is intended to simplify the evaluation and enable a step-by-step approach.
