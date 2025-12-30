@@ -532,7 +532,7 @@ Options:
 - `unless` (mixed): Only use the cache when this is falsey.
 
 
-Note: Uses Craft's TemplateCaches service under the hood, so (in theory) should behave the same, include cache invalidation.
+Note: Uses Craft's TemplateCaches service under the hood, so (in theory) should behave the same, including cache invalidation.
 
 ### Accessing Craft Global Variables
 
