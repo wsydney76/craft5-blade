@@ -62,21 +62,19 @@ class BladePlugin extends Plugin
         // Any code that creates an element query or loads Twig should be deferred until
         // after Craft is fully initialized, to avoid conflicts with other plugins/modules.
         Craft::$app->onInit(function() {
-            // Intentionally left blank for future initialization that must run after Craft boot.
+            // Provide a small Twig bridge so Twig templates can call `{{ renderBlade('view', {...}) }}`.
+            Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
+
+            // Note: We purposely don't rely on Composer autoload for these files.
+            // They define global functions (helpers/filters) which depend on Craft being initialized.
+            require_once 'support/BladeHelpers.php';
+            require_once 'support/BladeFilters.php';
+
+            // Register Blade compile-time directives and runtime conveniences.
+            BladeDirectives::register();
+            BladeShared::register();
+            BladeIfs::register();
         });
-
-        // Provide a small Twig bridge so Twig templates can call `{{ renderBlade('view', {...}) }}`.
-        Craft::$app->view->registerTwigExtension(new BladeTwigExtension());
-
-        // Note: We purposely don't rely on Composer autoload for these files.
-        // They define global functions (helpers/filters) which depend on Craft being initialized.
-        require_once 'support/BladeHelpers.php';
-        require_once 'support/BladeFilters.php';
-
-        // Register Blade compile-time directives and runtime conveniences.
-        BladeDirectives::register();
-        BladeShared::register();
-        BladeIfs::register();
     }
 
     /**

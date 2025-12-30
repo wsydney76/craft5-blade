@@ -339,7 +339,9 @@ Call Blade templates using the `renderBlade()` function:
 
 In order to use Blade templates for Craft entries, set the template in the section settings
 
-* to a custom controller action that renders a Blade template: `action:main/blog/show`
+#### Using a custom controller action
+
+* `action:main/blog/show` by route (controller action)
 
 ```php
 use wsydney76\blade\Blade;
@@ -363,9 +365,16 @@ public function actionShow()
     }
 ```
 
-* or to a Blade template directly: `blade:blog.show` (by prefix) or `blog/show.blade.php` (by file path/extension, relative to bladeViewsPath setting).
+The current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
 
-In both cases, the current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
+#### Directly to a Blade template
+
+* `blade:blog.show` (by prefix) 
+* `blog/show.blade.php` (by file path/extension, relative to bladeViewsPath setting).
+
+The current element is available in Blade automatically:
+
+- It’s injected into the view context based on the element’s short class name (lowercased), e.g. `Entry` → `$entry`, `Product` → `$product`.
 
 ### Template Localization
 

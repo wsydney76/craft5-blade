@@ -114,15 +114,22 @@ This is the “native” integration path for frontend requests.
    - `action:controller/action`
      - Craft route is set directly to that controller/action.
    - `blade:some.view`
-     - The route is changed to `"_blade/base-blade/render"`.
-     - Route params include `view => "some.view"`.
+     - routed to `"_blade/base-blade/render"` with `view` as route param.
    - `path/to/template.blade.php`
-     - Converted to dotted view name (`path.to.template`) and routed to `"_blade/base-blade/render"`.
+     - Converted to dotted view name (`path.to.template`) 
+     - routed to `"_blade/base-blade/render"` with `view` as route param.
 5. The controller action `BaseBladeController::actionRender($view)` calls `Blade::render($view)` and returns HTML.
 
-**Data inputs:** the template will have access to Craft’s shared globals (see “Global variables”), but note this controller currently just renders the view; it doesn’t automatically pass the current element as `$entry`.
+**Data inputs:** the template will have access to Craft’s shared globals (see “Global variables”).
 
-In practice, many Craft templates rely on the Twig global `entry` variable (set by Craft’s template rendering pipeline). If you need `entry`-style variables in Blade, you’ll typically wire them in via:
+In addition, if a Blade template is called directly,  `BaseBladeController::actionRender()` injects the matched element into the Blade view context using a variable name derived from the element’s short class name (lowercased):
+
+- `craft\elements\Entry` → `$entry`
+- `craft\commerce\elements\Product` → `$product`
+
+So when you route an entry to `blade:blog.show`, your Blade template can typically just use `$entry` without any extra wiring.
+
+If you need *additional* context beyond the matched element (prev/next entries, related elements, etc.), you can still attach it via:
 
 - view composers (`Blade::composer(...)`), or
 - custom controller actions that pass data to `Blade::render($view, $data)`.
@@ -271,7 +278,7 @@ For project-specific needs (e.g. always providing the current `Entry` as `$entry
 
 - The integration intentionally **doesn’t emulate** a full Laravel app; it wires only what Blade needs.
 - Global function helpers (`BladeHelpers.php`, `BladeFilters.php`) are **experimental** and may diverge from Twig semantics.
-- `BaseBladeController` currently renders a view by name only; any additional context must be passed explicitly or attached via composers.
+- `BaseBladeController` injects the matched element into the view context (e.g. `$entry`, `$product`) but otherwise renders the view by name only; any additional context must be passed explicitly or attached via composers.
 - The plugin currently focuses on entry routing. Other element types may work but are not guaranteed without more testing.
 
 ## Quick mental model
@@ -285,4 +292,3 @@ For project-specific needs (e.g. always providing the current `Entry` as `$entry
 
 - `README.md` — installation and usage notes
 - `ai-generated-docs/` — mappings for helper functions/filters (experimental)
-
