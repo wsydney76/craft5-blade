@@ -285,29 +285,47 @@ PHP;
 
     $__bladeCacheI = $__bladeCacheCounter;
 
+    // Options (all optional): ['key' => string, 'global' => bool, 'duration' => ?string, 'expiration' => mixed]
+    $__bladeCacheOptions = %s;
+
+    if (!is_array($__bladeCacheOptions)) {
+        $__bladeCacheOptions = (array)$__bladeCacheOptions;
+    }
+
+    $__bladeCacheGlobal = (bool)($__bladeCacheOptions['global'] ?? false);
+    $__bladeCacheDuration = $__bladeCacheOptions['duration'] ?? null;
+    $__bladeCacheExpiration = $__bladeCacheOptions['expiration'] ?? null;
+
     // Match Craft's ignore conditions (live preview or tokenized preview requests)
     ${"__bladeIgnoreCache{$__bladeCacheI}"} = ($__bladeCacheRequest->getIsLivePreview() || $__bladeCacheRequest->getToken());
 
     if (!${"__bladeIgnoreCache{$__bladeCacheI}"}) {
-        // Deterministic cache key for this block
-        ${"__bladeCacheKey{$__bladeCacheI}"} = hash('sha256', (__FILE__ ?? '') . '|' . (__LINE__ ?? '') . '|' . %s);
-        ${"__bladeCacheBody{$__bladeCacheI}"} = $__bladeCacheService->getTemplateCache(${"__bladeCacheKey{$__bladeCacheI}"}, false, true);
+        // Cache key: allow explicit override, otherwise use deterministic key
+        $__bladeCacheKeyValue = $__bladeCacheOptions['key'] ?? null;
+        if (!$__bladeCacheKeyValue) {
+            $__bladeCacheKeyValue = hash('sha256', (__FILE__ ?? '') . '|' . (__LINE__ ?? '') . '|' . json_encode($__bladeCacheOptions));
+        }
+        ${"__bladeCacheKey{$__bladeCacheI}"} = (string)$__bladeCacheKeyValue;
+
+        ${"__bladeCacheBody{$__bladeCacheI}"} = $__bladeCacheService->getTemplateCache(${"__bladeCacheKey{$__bladeCacheI}"}, $__bladeCacheGlobal, true);
     } else {
         ${"__bladeCacheBody{$__bladeCacheI}"} = null;
     }
 
     if (${"__bladeCacheBody{$__bladeCacheI}"} === null) {
         if (!${"__bladeIgnoreCache{$__bladeCacheI}"}) {
-            $__bladeCacheService->startTemplateCache(true, false);
+            // Keep original defaults (withResources=true, global=false) unless overridden
+            $__bladeCacheService->startTemplateCache(true, $__bladeCacheGlobal);
         }
         ob_start();
 ?>
 PHP;
 
-        // Normalize empty expression: Blade passes '' when directive has no parentheses.
+        // Blade passes an empty string when directive has no parentheses.
+        // Treat missing expression as an empty options array.
         $expr = trim($expression);
         if ($expr === '') {
-            $expr = "''";
+            $expr = '[]';
         }
 
         return \sprintf($template, $expr);
@@ -324,9 +342,9 @@ PHP;
         if (!${"__bladeIgnoreCache{$__bladeCacheI}"}) {
             $__bladeCacheService->endTemplateCache(
                 ${"__bladeCacheKey{$__bladeCacheI}"},
-                false,
-                null,
-                null,
+                $__bladeCacheGlobal,
+                $__bladeCacheDuration,
+                $__bladeCacheExpiration,
                 ${"__bladeCacheBody{$__bladeCacheI}"},
                 true
             );
@@ -335,7 +353,16 @@ PHP;
 
     echo ${"__bladeCacheBody{$__bladeCacheI}"};
 
-    unset($__bladeCacheService, $__bladeCacheRequest, $__bladeCacheI);
+    unset(
+        $__bladeCacheService,
+        $__bladeCacheRequest,
+        $__bladeCacheI,
+        $__bladeCacheOptions,
+        $__bladeCacheGlobal,
+        $__bladeCacheDuration,
+        $__bladeCacheExpiration,
+        $__bladeCacheKeyValue
+    );
 ?>
 PHP;
 
