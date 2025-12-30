@@ -103,38 +103,52 @@ This also keeps the rest of the codebase from tightly coupling to the internal `
 
 ## Request and rendering flows
 
-### Flow A: Craft Entry route → Blade template
+### Flow A: Craft Entry route → Controller → Blade template
 
-This is the “native” integration path for frontend requests.
+This is the preferred “native” integration path for frontend requests, separating logic from presentation.
 
 1. A request resolves to an `Entry` element.
 2. Craft dispatches `Entry::EVENT_SET_ROUTE`.
-3. `BladePlugin::attachEventHandlers()` inspects the section template setting (or field settings for Matrix, when applicable).
+3. `BladePlugin::attachEventHandlers()` implements an event listener that inspects the section template setting (or field settings for Matrix, when applicable).
 4. Supported section template values:
    - `action:controller/action`
      - Craft route is set directly to that controller/action.
-   - `blade:some.view`
-     - routed to `"_blade/base-blade/render"` with `view` as route param.
-   - `path/to/template.blade.php`
-     - Converted to dotted view name (`path.to.template`) 
-     - routed to `"_blade/base-blade/render"` with `view` as route param.
+5. The controller action (your custom controller) calls `Blade::render($view, $data)` and returns HTML.
+
+**Data inputs:** the template will have access to Craft’s shared globals (see “Global variables”).
+
+Additionally, your custom controller action is responsible for providing any context data the Blade template needs (the matched element, related elements, etc.).
+
+### Flow B: Craft Entry route → Blade template
+
+This is an alternative “native” integration path for frontend requests.
+
+1. A request resolves to an `Entry` element.
+2. Craft dispatches `Entry::EVENT_SET_ROUTE`.
+3. `BladePlugin::attachEventHandlers()` implements an event listener that inspects the section template setting (or field settings for Matrix, when applicable).
+4. Supported section template values:
+    - `blade:some.view`
+        - routed to `"_blade/base-blade/render"` with `view` as route param.
+    - `path/to/template.blade.php`
+        - Converted to dotted view name (`path.to.template`)
+        - routed to `"_blade/base-blade/render"` with `view` as route param.
 5. The controller action `BaseBladeController::actionRender($view)` calls `Blade::render($view)` and returns HTML.
 
 **Data inputs:** the template will have access to Craft’s shared globals (see “Global variables”).
 
-In addition, if a Blade template is called directly,  `BaseBladeController::actionRender()` injects the matched element into the Blade view context using a variable name derived from the element’s short class name (lowercased):
+`BaseBladeController::actionRender()` injects the matched element into the Blade view context using a variable name derived from the element’s short class name (lowercased):
 
 - `craft\elements\Entry` → `$entry`
 - `craft\commerce\elements\Product` → `$product`
 
 So when you route an entry to `blade:blog.show`, your Blade template can typically just use `$entry` without any extra wiring.
 
-If you need *additional* context beyond the matched element (prev/next entries, related elements, etc.), you can still attach it via:
+If you need *additional* context beyond the matched element (prev/next entries, related elements, etc.), you can
 
-- view composers (`Blade::composer(...)`), or
-- custom controller actions that pass data to `Blade::render($view, $data)`.
+* retrieve that data inside the Blade template using Craft's API or native PHP functions,
+* use Blade view composers to attach data to specific views (see below).
 
-### Flow B: Twig template → Blade template (`renderBlade()`)
+### Flow C: Twig template → Blade template (`renderBlade()`)
 
 If you’re still in Twig but want to delegate some rendering to Blade:
 
@@ -144,7 +158,7 @@ If you’re still in Twig but want to delegate some rendering to Blade:
 
 This is useful for incremental migrations where Twig remains the primary template engine.
 
-### Flow C: Blade template → Twig template (`@renderTwig`)
+### Flow D: Blade template → Twig template (`@renderTwig`)
 
 If you’re in Blade and want to reuse an existing Twig partial:
 
