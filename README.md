@@ -405,6 +405,8 @@ To customize the prefix, add this to `config/_blade.php`:
 return [
     // ...
     'bladeRoutePrefix' => 'views',
+    // can be an array for multiple craft\web\assets\routes
+    'bladeRoutePrefix' => ['views', 'pages']
 ];
 ```
 

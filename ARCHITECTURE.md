@@ -175,7 +175,7 @@ Registration happens in `BladePlugin::attachEventHandlers()` via `UrlManager::EV
 - Route pattern: `/{routePrefix}/{view}`
 - Controller route: `_blade/base-blade/render`
 - Settings:
-  - `Settings::$routePrefix` (default: `blade`)
+  - `Settings::bladeRoutePrefix` (default: `blade`). Can be a string or an array of strings, multiple routes will then be registered.
 
 Examples (default prefix):
 
