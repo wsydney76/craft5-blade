@@ -79,6 +79,21 @@ class BladeDirectives
         Blade::directive('header', function($expression) {
             return static::compileHeader($expression);
         });
+
+        // Craft template fragment cache (mirrors Twig's `{% cache %}...{% endcache %}` behavior).
+        // Usage:
+        //   @cache
+        //      ...
+        //   @endcache
+        //
+        // Note: For now we support the no-args form (same as `{% cache %}` with no options).
+        Blade::directive('cache', function($expression) {
+            return static::compileCacheStart($expression);
+        });
+
+        Blade::directive('endcache', function() {
+            return static::compileCacheEnd();
+        });
     }
 
     /**
@@ -245,5 +260,85 @@ PHP;
 
         return \sprintf($template, $expression);
     }
-}
 
+    /**
+     * Compiler for the cache directive (start).
+     *
+     * Generates PHP equivalent to Craft's compiled Twig `{% cache %}` tag.
+     *
+     * Current support:
+     * - No-args usage only.
+     *
+     * Notes:
+     * - Uses a static counter so nested blocks get unique variable names.
+     * - Uses a deterministic cache key based on file + line (when available) + expression.
+     */
+    private static function compileCacheStart(string $expression): string
+    {
+        $template = <<<'PHP'
+<?php
+    $__bladeCacheService = \Craft::$app->getTemplateCaches();
+    $__bladeCacheRequest = \Craft::$app->getRequest();
+
+    static $__bladeCacheCounter = 0;
+    $__bladeCacheCounter++;
+
+    $__bladeCacheI = $__bladeCacheCounter;
+
+    // Match Craft's ignore conditions (live preview or tokenized preview requests)
+    ${"__bladeIgnoreCache{$__bladeCacheI}"} = ($__bladeCacheRequest->getIsLivePreview() || $__bladeCacheRequest->getToken());
+
+    if (!${"__bladeIgnoreCache{$__bladeCacheI}"}) {
+        // Deterministic cache key for this block
+        ${"__bladeCacheKey{$__bladeCacheI}"} = hash('sha256', (__FILE__ ?? '') . '|' . (__LINE__ ?? '') . '|' . %s);
+        ${"__bladeCacheBody{$__bladeCacheI}"} = $__bladeCacheService->getTemplateCache(${"__bladeCacheKey{$__bladeCacheI}"}, false, true);
+    } else {
+        ${"__bladeCacheBody{$__bladeCacheI}"} = null;
+    }
+
+    if (${"__bladeCacheBody{$__bladeCacheI}"} === null) {
+        if (!${"__bladeIgnoreCache{$__bladeCacheI}"}) {
+            $__bladeCacheService->startTemplateCache(true, false);
+        }
+        ob_start();
+?>
+PHP;
+
+        // Normalize empty expression: Blade passes '' when directive has no parentheses.
+        $expr = trim($expression);
+        if ($expr === '') {
+            $expr = "''";
+        }
+
+        return \sprintf($template, $expr);
+    }
+
+    /**
+     * Compiler for the cache directive (end).
+     */
+    private static function compileCacheEnd(): string
+    {
+        $template = <<<'PHP'
+<?php
+        ${"__bladeCacheBody{$__bladeCacheI}"} = ob_get_clean();
+        if (!${"__bladeIgnoreCache{$__bladeCacheI}"}) {
+            $__bladeCacheService->endTemplateCache(
+                ${"__bladeCacheKey{$__bladeCacheI}"},
+                false,
+                null,
+                null,
+                ${"__bladeCacheBody{$__bladeCacheI}"},
+                true
+            );
+        }
+    }
+
+    echo ${"__bladeCacheBody{$__bladeCacheI}"};
+
+    unset($__bladeCacheService, $__bladeCacheRequest, $__bladeCacheI);
+?>
+PHP;
+
+        return $template;
+    }
+}
