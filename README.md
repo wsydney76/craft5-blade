@@ -531,8 +531,9 @@ Options:
 - `if` (mixed): Only use the cache when this is truthy.
 - `unless` (mixed): Only use the cache when this is falsey.
 
-
 Note: Uses Craft's TemplateCaches service under the hood, so (in theory) should behave the same, including cache invalidation.
+
+Cache fragments created via Twig and via Blade are interoperable: if both use the same cache key and are 'global', they refer to the same underlying Craft template cache entry and can be reused interchangeably.
 
 ### Accessing Craft Global Variables
 
