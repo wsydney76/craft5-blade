@@ -339,6 +339,16 @@ Call Blade templates using the `renderBlade()` function:
 {{ renderBlade('component.blocks.text', { text: 'Craft', class: 'text-xl' }) }}
 ```
 
+This can be used to embed Blade components in Twig layouts, so that you can gradually migrate templates.
+
+```twig
+{% extends "_layouts/main.twig" %}
+
+{% block proseContent %}
+    {{ renderBlade('film.filmdetails', {entry}) }}
+{% endblock %}
+```
+
 ### Routing for Craft entries
 
 In order to use Blade templates for Craft entries, set the template in the section settings
@@ -350,7 +360,7 @@ In order to use Blade templates for Craft entries, set the template in the secti
 ```php
 use wsydney76\blade\Blade;
 ...
-public function actionShow()
+public function actionShow(): string
     {
         $entry = Craft::$app->urlManager->getMatchedElement();
         if (!$entry) {
@@ -370,6 +380,8 @@ public function actionShow()
 ```
 
 The current element can be accessed via `Craft::$app->urlManager->getMatchedElement()`.
+
+Craft will automatically set the correct content type header `text/html` for the response.
 
 #### Directly to a Blade template
 
