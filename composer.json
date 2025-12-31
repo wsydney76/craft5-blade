@@ -4,7 +4,7 @@
   "type": "craft-plugin",
   "require": {
     "php": ">=8.2",
-    "craftcms/cms": "^5.8.21",
+    "craftcms/cms": "^5.8.0",
     "illuminate/view": "^v10.49.0",
     "illuminate/events": "^v10.49.0",
     "illuminate/filesystem": "^v10.49.0",
