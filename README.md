@@ -88,7 +88,7 @@ where:
 
 * `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
 * `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
-* `bladeComponentPaths` - Additional component paths with (optional) prefixes, defaults to empty array. In this example, you could use `<x-shared:mycomponent />` to reference a component in `@templates/_shared/mycomponent.blade.php`.
+* `bladeComponentPaths` - Additional component paths with (optional) prefixes, defaults to empty array. In this example, you could use `<x-shared::mycomponent />` to reference a component in `@templates/_shared/mycomponent.blade.php`.
 * `bladeViewPrefix` - Prefix for URL routes pointing directly to Blade templates, defaults to `blade`. That would make `/views/articles/list/bydate` render `articles.list.bydate`. Can be a string or an array of strings, multiple routes will then be registered.
 
 Path values support Craft aliases.
