@@ -18,6 +18,8 @@ Functionality will only be fixed or improved as needed.
 
 This plugin requires Craft CMS 5.8.0 or later, and PHP 8.2 or later.
 
+Internally, requires `illuminate` packages (Laravel's Blade engine etc) version 10.x, matching the version Craft CMS 5.x uses for Laravel collections.
+
 ## Installation
 
 Add to `composer.json` file in your project root to require this plugin:
@@ -51,7 +53,6 @@ Run `ddev craft plugin/install _blade`.
 - **Global data sharing** - Access Craft global variables in Blade templates (like `craft`, site name, etc.)
 - **Template inheritance** - Use Blade's powerful layout system with `@extends` and `@section`
 
-
 ## Limitations
 
 - Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
@@ -64,40 +65,35 @@ Run `ddev craft plugin/install _blade`.
 - Support for Craft's Twig functions and filters is experimental.
 - Does not support Livewire-like reactive components out of the box.
 
-## Helper Functions and Filters
+## Configuration
 
-Experimental.
+If you want to customize Blade settings, create a config file at `config/_blade.php`.
 
-As a first step towards supporting Craft's Twig functions and filters in Blade templates, the Craft Twig extension was thrown into AI, and the functions and filters were converted to standalone PHP functions in `BladeHelpers.php` and `BladeFilters.php`, along with some docs.
+```php
+<?php
 
-Publishing these results here unedited and untested for further evaluation, but no guarantees regarding completeness or correctness.
+use craft\helpers\App;
 
-Blade helper functions are automatically available in your templates and include:
+return [
+    'bladeViewsPath' => App::env('BLADE_VIEWS_PATH') ?? '@templates/_blade',
+    'bladeCachePath' => App::env('BLADE_CACHE_PATH') ?? '@runtime/blade/cache',
+    'bladeComponentPaths' => [
+        ['path' => '@templates/_shared', 'prefix' => 'shared'],
+    ],
+    'bladeViewPrefix' => 'views'
+];
+```
 
-- **Craft CMS functions** - URL helpers, config helpers, element queries, etc.
-- **Twig filters as functions** - Most Craft CMS Twig filters are available as PHP functions for use in Blade (see `BLADE_FILTERS_MAPPING.md` for a complete list)
-- **HTML helpers** - Common HTML output functions
-- **Translation helper** - `__()` function for translation
+where:
 
-See  [BLADE_FUNCTIONS_MAPPING.md](ai-generated-docs/BLADE_FUNCTIONS_MAPPING.md) and [HELPER_FILTERS_MAPPING.md](./ai-generated-docs/BLADE_FILTERS_MAPPING.md) for mapping to Craft's core funtionality.
+* `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
+* `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
+* `bladeComponentPaths` - Additional component paths with (optional) prefixes, defaults to empty array. In this example, you could use `<x-shared:mycomponent />` to reference a component in `@templates/_shared/mycomponent.blade.php`.
+* `bladeViewPrefix` - Prefix for URL routes pointing directly to Blade templates, defaults to `blade`. That would make `/views/articles/list/bydate` render `articles.list.bydate`. Can be a string or an array of strings, multiple routes will then be registered.
 
-See  [BLADE_FUNCTIONS_QUICK_REFERENCE.md](ai-generated-docs/BLADE_FUNCTIONS_QUICK_REFERENCE.md) and [BLADE_FILTERS_QUICK_REFERENCE](./ai-generated-docs/BLADE_FILTERS_QUICK_REFERENCE.md) for mapping to Craft's core funtionality.
+Path values support Craft aliases.
 
-In the current state of this PoC, no further work will be done, accept fixing concrete issues as they arise.
-
-Note that some functions and filters must not be escaped in Blade templates to work correctly, e.g. HTML output functions like `csrfInput()`. Use `{!! ... !!}` instead of `{{ ... }}` for these.
-
-Possible next steps:
-
-* Testing...
-* Drop functions that have equivalents in Laravel Blade (e.g. dump, dd).
-* Drop functions that map directly to PHP native functions (e.g. array handling).
-* Drop functions that map directly to Craft helper methods? (e.g. siteUrl() => UrlHelper::siteUrl()).
-* Drop functions that map directly to Craft services? (e.g. entryType() => Craft::$app->getEntries()->getEntryTypeByHandle()).
-* Implement as directives instead of functions in order to avoid escaping issues? (e.g. `@csrfInput` instead of `{!! csrfInput() !!}`).
-* Drop functions that will most likely never be used in a lifetime (e.g. `gql()`).
-* Implement Laravel style helper functions for common services? (e.g. `request()` vs. `Craft::$app->getRequest()`).
-* Check Craft's Twig tags and see if some can be implemented as Blade directives (e.g. `requireAdmin`).
+If the `bladeViewsPath` is changed, you may need to adjust your IDE settings to recognize Blade templates in that directory.
 
 ## Usage
 
@@ -106,8 +102,6 @@ Possible next steps:
 Create your Blade templates in the `resources/views` directory (or the path configured in `config/_blade.php`).
 
 Template cache is stored in `storage/runtime/blade/cache` (or the path configured in `config/_blade.php`).
-
-That would make `/views/articles/list/bydate` render `articles.list.bydate`.
 
 ### Creating Blade Templates
 
@@ -136,23 +130,6 @@ Create `.blade.php` files in your views directory:
     </article>
 </x-layout>
 ```
-
-### Predefined Directives
-
-The following Blade directives are predefined:
-
-- `@markdown($text, $flavor = 'original', $purifierConfig = null)` - Render purified Markdown content to HTML
-- `@paginate($query, $resultsKey = 'elements', $pageInfoKey = 'pageInfo')` - Handle pagination for an element query (experimental)
-- `@renderTwig($template, $data = [])` - Render a Twig template from Blade
-- `@includeLocalized($template, $data = [])` - Include a localized template (experimental)
-- `@requireAdmin` - Require admin access for the current user (throws 403 otherwise)
-- `@requirePermission($permission)` - Require a specific permission for the current user (throws 403 otherwise)
-- `@requireLogin` - Require the user to be logged in (throws 403 otherwise)
-- `@requireGuest` - Require the user to be logged out (throws 403 otherwise)
-- `@redirect($url, $statusCode=302)` - Redirects to a given URL (throws a redirect response).
-- `@header($headerLine)` - Sets an HTTP response header, matching Craft’s Twig `{% header %}` tag compiler behavior
-- `@cache($options = []) ... @endcache` - Template fragment caching (Craft’s Twig `{% cache %}` equivalent)
-
 
 ### Components
 
@@ -322,7 +299,6 @@ Blade::render(['custom.template', 'fallback.template'], [
 ])
 ```
 
-
 ### Using Twig from Blade
 
 Call Twig templates using the `@renderTwig()` directive:
@@ -399,7 +375,7 @@ The plugin registers a **site route** that can render a Blade view directly from
 This is mainly used for routes that do not correspond to Craft elements, e.g. static pages or special endpoints.
 
 - Default prefix: `blade`
-- Config key: `bladeRoutePrefix` (plugin settings / `config/_blade.php`)
+- Config key: `bladeRoutePrefix` (plugin settings / `config/_blade.php`).Can be a string or an array of strings, multiple routes will then be registered. 
 
 Examples (default prefix):
 
@@ -409,7 +385,7 @@ Examples (default prefix):
 Notes:
 
 - The `{view}` portion is treated as a slash-delimited path and is normalized to a dotted view name.
-- The endpoint is anonymous by default (see `BaseBladeController::$allowAnonymous`). Don't expose views that should require authentication.
+- The endpoint is anonymous by default.
 
 To customize the prefix, add this to `config/_blade.php`:
 
@@ -596,7 +572,60 @@ All [Craft global variables](https://craftcms.com/docs/5.x/reference/twig/global
 @php($entries = $craft->entries()->section('*')->all())
 ```
 
-## Custom Directives
+## Helper Functions and Filters
+
+Experimental.
+
+As a first step towards supporting Craft's Twig functions and filters in Blade templates, the Craft Twig extension was thrown into AI, and the functions and filters were converted to standalone PHP functions in `BladeHelpers.php` and `BladeFilters.php`, along with some docs.
+
+Publishing these results here unedited and untested for further evaluation, but no guarantees regarding completeness or correctness.
+
+Blade helper functions are automatically available in your templates and include:
+
+- **Craft CMS functions** - URL helpers, config helpers, element queries, etc.
+- **Twig filters as functions** - Most Craft CMS Twig filters are available as PHP functions for use in Blade (see `BLADE_FILTERS_MAPPING.md` for a complete list)
+- **HTML helpers** - Common HTML output functions
+- **Translation helper** - `__()` function for translation
+
+See  [BLADE_FUNCTIONS_MAPPING.md](ai-generated-docs/BLADE_FUNCTIONS_MAPPING.md) and [HELPER_FILTERS_MAPPING.md](./ai-generated-docs/BLADE_FILTERS_MAPPING.md) for mapping to Craft's core funtionality.
+
+See  [BLADE_FUNCTIONS_QUICK_REFERENCE.md](ai-generated-docs/BLADE_FUNCTIONS_QUICK_REFERENCE.md) and [BLADE_FILTERS_QUICK_REFERENCE](./ai-generated-docs/BLADE_FILTERS_QUICK_REFERENCE.md) for mapping to Craft's core funtionality.
+
+In the current state of this PoC, no further work will be done, accept fixing concrete issues as they arise.
+
+Note that some functions and filters must not be escaped in Blade templates to work correctly, e.g. HTML output functions like `csrfInput()`. Use `{!! ... !!}` instead of `{{ ... }}` for these.
+
+Possible next steps:
+
+* Testing...
+* Drop functions that have equivalents in Laravel Blade (e.g. dump, dd).
+* Drop functions that map directly to PHP native functions (e.g. array handling).
+* Drop functions that map directly to Craft helper methods? (e.g. siteUrl() => UrlHelper::siteUrl()).
+* Drop functions that map directly to Craft services? (e.g. entryType() => Craft::$app->getEntries()->getEntryTypeByHandle()).
+* Implement as directives instead of functions in order to avoid escaping issues? (e.g. `@csrfInput` instead of `{!! csrfInput() !!}`).
+* Drop functions that will most likely never be used in a lifetime (e.g. `gql()`).
+* Implement Laravel style helper functions for common services? (e.g. `request()` vs. `Craft::$app->getRequest()`).
+* Check Craft's Twig tags and see if some can be implemented as Blade directives (e.g. `requireAdmin`).
+
+### Predefined Directives
+
+The following Blade directives are predefined:
+
+- `@markdown($text, $flavor = 'original', $purifierConfig = null)` - Render purified Markdown content to HTML
+- `@paginate($query, $resultsKey = 'elements', $pageInfoKey = 'pageInfo')` - Handle pagination for an element query (experimental)
+- `@renderTwig($template, $data = [])` - Render a Twig template from Blade
+- `@includeLocalized($template, $data = [])` - Include a localized template (experimental)
+- `@requireAdmin` - Require admin access for the current user (throws 403 otherwise)
+- `@requirePermission($permission)` - Require a specific permission for the current user (throws 403 otherwise)
+- `@requireLogin` - Require the user to be logged in (throws 403 otherwise)
+- `@requireGuest` - Require the user to be logged out (throws 403 otherwise)
+- `@redirect($url, $statusCode=302)` - Redirects to a given URL (throws a redirect response).
+- `@header($headerLine)` - Sets an HTTP response header, matching Craft’s Twig `{% header %}` tag compiler behavior
+- `@cache($options = []) ... @endcache` - Template fragment caching (Craft’s Twig `{% cache %}` equivalent)
+
+## Customize
+
+### Custom Directives
 
 Define custom Blade directives in your plugin or module:
 
@@ -612,7 +641,7 @@ Usage in Blade templates:
 <p>Published at: @datetime($entry->postDate)</p>
 ```
 
-## Shared Data
+### Shared Data
 
 Share global data across all Blade templates:
 
@@ -630,7 +659,7 @@ Then access it in any Blade template:
 
 This mimics Craft's `preloadSingles` feature for Twig templates. Kind of.
 
-## Custom If Statements
+### Custom If Statements
 
 Define custom Blade If statements in your plugin or module:
 
@@ -655,7 +684,7 @@ Usage in Blade templates:
 @enddev
 ```
 
-## Custom Echo Handlers
+### Custom Echo Handlers
 
 Register custom stringable handlers to automatically format objects that don't implement a `__toString` method:
 
@@ -691,7 +720,7 @@ Blade::stringable(Money\Money::class, function($money) {
 
 Note that you can't pass additional parameters to the stringable handler. If you need more control, consider using a custom Blade directive or helper function instead.
 
-## View Composers
+### View Composers
 
 Laravel-style Blade view composers are supported.
 
@@ -718,7 +747,7 @@ Then use the injected variables in your Blade template:
 {{ $composerMessage }}
 ```
 
-## Common Blade Settings
+### Common Blade Settings
 
 If multiple controllers are used, extend from a base controller to set common Blade settings:
 
@@ -754,36 +783,7 @@ php craft clear-caches/blade
 
 Or via Control Panel: Utilities → Caches → Blade Template Cache.
 
-The template cache has to be cleared when Blade custom directives are changed.
-
-## Configuration
-
-If you want to customize Blade settings, create a config file at `config/_blade.php`.
-
-```php
-<?php
-
-use craft\helpers\App;
-
-return [
-    'bladeViewsPath' => App::env('BLADE_VIEWS_PATH') ?? '@templates/_blade',
-    'bladeCachePath' => App::env('BLADE_CACHE_PATH') ?? '@runtime/blade/cache',
-    'bladeComponentPaths' => [
-        ['path' => '@templates/_shared', 'prefix' => 'shared'],
-    ],
-    'bladeViewPrefix' => 'views'
-];
-```
-
-where:
-
-* `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
-* `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
-* `bladeComponentPaths` - Additional component paths with (optional) prefixes, defaults to empty array. In this example, you could use `<x-shared:mycomponent />` to reference a component in `@templates/_shared/mycomponent.blade.php`.
-* `bladeViewPrefix` - Prefix for URL routes pointing directly to Blade templates, defaults to `blade`.
-
-* Path values support Craft aliases.
-
+The template cache has to be cleared when Blade custom directives are updated.
 
 ## Reactive components
 
@@ -793,163 +793,4 @@ Consider porting existing components to Twig using Sprig plugin or alike.
 
 Otherwise, you can integrate with Alpine.js (which is used by Livewire behind the scenes) to come somewhat close and keep most of your controller logic and templates.
 
-For convenience, this plugin ships with a copy of a [Craft CMS Action Twig Helper Component](https://github.com/wsydney76/extras/blob/main/ACTIONS.md), stolen from a private plugin.
-
-Pull it in with `@renderTwig('@blade/_actions.twig')`
-
-In this example, you would
-
-* replace `wire:model.live.debounce.500ms="q"` with `x-model="q"` and `@input.debounce.500ms="fetch"`
-* add an Alpine.js component that implements `fetch()` and calls the Craft Action to fetch updated results and update the DOM accordingly.
-* place the search results in a separate Blade component that can be rendered both on initial page load and via the Action, enabling partial reload.
-
-If required, add handling for browser history updates including `popState` events.
-
-See [docs for helper functions](https://github.com/wsydney76/extras/blob/main/ACTIONS.md#alpine-js-browser-history-management).
-
-### Main Blade Template
-
-Extract JavaScript into your asset bundle as needed.
-
-```blade
-@props([
-    'entry' => null,
-    'q' => '',
-    'resultHtml' => '',
-])
-<x-layout title="Search">
-    <h1>{{ ($entry->title ?? null) ?: 'Search' }}</h1>
-
-    <div x-data="searchWidget({
-            q: @js($q),
-            html: @js($resultHtml)
-            })"
-         @popstate.window="popState"
-         class="space-y-4"
-    >
-        <form @submit.prevent>
-            <input x-model="q"
-                   @input.debounce.500ms="fetch"
-                   autofocus
-                   type="text"
-                   name="q"
-                   placeholder="Search..."
-                   class="w-full"
-            >
-        </form>
-
-        <div id="results" x-html="html"></div>
-    </div>
-
-    @renderTwig('@blade/_actions.twig')
-
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('searchWidget', ({ q, html }) => ({
-                q,
-                html,
-                searchParams: ['q'],
-
-                fetch(updateHistory = true) {
-                    updateHistory && window.Actions.pushState.call(this, this.searchParams);
-                    if (!this.q) {
-                        this.html = '';
-                        return;
-                    }
-                    window.Actions.postAction('main/search/fetch',
-                        { q: this.q },
-                        (data) => {
-                            this.html = data;
-                        },
-                    );
-                },
-
-                popState() {
-                    window.Actions.popState.call(this, this.searchParams, () => this.fetch(false));
-                },
-            }));
-        });
-    </script>
-</x-layout>
-```
-
-### Component Template
-
-```blade
-@php($hasQuery = isset($q) && trim($q) !== '')
-
-@if(!empty($items))
-    <ul>
-        @foreach($items as $item)
-            <li>
-                <a href="{{ $item->url }}">{{ $item->title }}</a>
-            </li>
-        @endforeach
-    </ul>
-@elseif($hasQuery)
-    <p>No results found.</p>
-@endif
-
-```
-
-### Controller
-
-```php
-<?php
-
-namespace modules\main\controllers;
-
-use Craft;
-use craft\elements\Entry;
-use craft\helpers\UrlHelper;
-use craft\web\Controller;
-use wsydney76\blade\Blade;
-
-/**
- * Search controller
- */
-class SearchController extends Controller
-{
-    public $defaultAction = 'index';
-    protected array|int|bool $allowAnonymous = ['index', 'fetch'];
-
-    public string $q = '';
-
-    public function beforeAction($action): bool
-    {
-        $this->q = Craft::$app->getRequest()->getParam('q', '');
-        return parent::beforeAction($action);
-    }
-
-    public function actionIndex()
-    {
-        return Blade::render('search', [
-            'entry' => Craft::$app->urlManager->getMatchedElement(),
-            'q' => $this->q,
-            'resultHtml' => $this->renderComponent()
-        ]);
-    }
-
-    public function actionFetch()
-    {
-        return $this->renderComponent();
-    }
-
-    protected function renderComponent()
-    {
-        $entries = [];
-        if (trim($this->q) !== '') {
-            $entries = Entry::find()
-                ->section('post')
-                ->search($this->q)
-                ->all();
-        }
-
-        return Blade::render('components.search-results', [
-            'items' => $entries,
-            'q' => $this->q,
-        ]);
-    }
-}
-
-```
+See [REACTIVECOMPONENTS.md](./REACTIVECOMPONENTS.md) for an example implementation of a reactive search component using Alpine.js.
