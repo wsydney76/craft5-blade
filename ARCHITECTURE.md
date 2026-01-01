@@ -26,6 +26,9 @@ Key locations in `blade/src/`:
   - `BladeDirectives.php` — built-in Blade directives compiled at template compile-time.
   - `BladeIfs.php` — built-in Blade conditionals (`@auth`, `@guest`).
   - `BladeShared.php` — shares Craft’s Twig globals to Blade view scope.
+  - `BladeStringables.php` — registers stringable handlers from settings.
+  - `BladeComponents.php` — registers class-based Blade components from settings.
+  - `BladeViewComposers.php` — registers view composers from settings.
   - `BladeHelpers.php` / `BladeFilters.php` — global PHP functions that mirror Craft Twig functions/filters (experimental).
 - `web/twig/BladeTwigExtension.php` — Twig function `renderBlade()`.
 
@@ -69,6 +72,16 @@ Settings input:
 - `Settings::$bladeViewsPath` — where source templates live (default: `@root/resources/views`).
 - `Settings::$bladeCachePath` — where compiled templates are written (default: `@runtime/blade/cache`).
 - `Settings::$bladeComponentPaths` — optional directories for anonymous components (mapped via `Blade::anonymousComponentPath`).
+- `Settings::$bladeRoutePrefix` — route prefix(es) for direct URL rendering.
+
+Extension points (config-driven):
+
+- `Settings::$bladeShared` — additional globals shared into Blade view scope (applied after Craft Twig globals).
+- `Settings::$bladeDirectives` — additional custom directives registered at boot.
+- `Settings::$bladeIfs` — additional Blade conditionals.
+- `Settings::$bladeStringables` — additional stringable handlers.
+- `Settings::$bladeComponents` — class-based Blade components registered at boot.
+- `Settings::$bladeViewComposers` — view composers registered at boot.
 
 At the end of boot, `BladeBootstrap` exposes:
 
@@ -199,6 +212,9 @@ Custom controller actions can be setup using the usual Craft mechanisms and fina
 
 Those globals are then shared into Blade using `Blade::share($key, $value)`.
 
+Additionally, the plugin reads `Settings::$bladeShared` and shares those values afterwards.
+If a key collides, the configured value wins.
+
 This aims to make Blade templates feel closer to Twig templates by providing variables like:
 
 - `craft`
@@ -247,6 +263,8 @@ Included directives (non-exhaustive):
 - `@cache($options = []) ... @endcache` — template fragment caching using Craft’s TemplateCaches service (Twig `{% cache %}` equivalent)
 
 Security note: directives like `@set` and `@redirect` are powerful. Use them in trusted templates only.
+
+In addition to the built-ins, the plugin reads `Settings::$bladeDirectives` and registers those as directives.
 
 #### Template fragment caching (`@cache ... @endcache`)
 
@@ -334,6 +352,10 @@ Common ways to extend behavior:
   - `Blade::component('alert', \App\View\Components\Alert::class);`
 - Register view composers:
   - `Blade::composer('blog.*', function ($view) { ... });`
+
+Config-driven alternatives (in `config/_blade.php`):
+
+- Register view composers: `bladeViewComposers`
 
 For project-specific needs (e.g. always providing the current `Entry` as `$entry`), composers are typically the cleanest approach.
 

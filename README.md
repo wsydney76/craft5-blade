@@ -76,10 +76,15 @@ use craft\helpers\App;
 return [
     'bladeViewsPath' => App::env('BLADE_VIEWS_PATH') ?? '@templates/_blade',
     'bladeCachePath' => App::env('BLADE_CACHE_PATH') ?? '@runtime/blade/cache',
+
+    // Anonymous component roots (optional)
     'bladeComponentPaths' => [
         ['path' => '@templates/_shared', 'prefix' => 'shared'],
     ],
-    'bladeViewPrefix' => 'views'
+
+    // Route prefix(es) for direct rendering URLs
+    // e.g. /blade/articles/list -> view "articles.list"
+    'bladeRoutePrefix' => App::env('BLADE_ROUTE_PREFIX') ?? 'blade',
 ];
 ```
 
@@ -87,12 +92,14 @@ where:
 
 * `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
 * `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
-* `bladeComponentPaths` - Additional component paths with (optional) prefixes, defaults to empty array. In this example, you could use `<x-shared::mycomponent />` to reference a component in `@templates/_shared/mycomponent.blade.php`.
-* `bladeViewPrefix` - Prefix for URL routes pointing directly to Blade templates, defaults to `blade`. That would make `/views/articles/list/bydate` render `articles.list.bydate`. Can be a string or an array of strings, multiple routes will then be registered.
+* `bladeComponentPaths` - Additional anonymous component paths with (optional) prefixes.
+* `bladeRoutePrefix` - Prefix for URL routes pointing directly to Blade templates, defaults to `blade`. Can be a string or an array of strings; multiple routes will then be registered.
 
 Path values support Craft aliases.
 
 If the `bladeViewsPath` is changed, you may need to adjust your IDE settings to recognize Blade templates in that directory.
+
+See [Customize](#customize) section for further configuration options.
 
 ## Usage
 
@@ -746,6 +753,55 @@ Then use the injected variables in your Blade template:
 {{ $composerMessage }}
 ```
 
+### Config-driven Customization
+
+Experimental, AI generated.
+
+For convenience, you can also define customizations in the `config/_blade.php` config file.
+
+```php
+return [
+    'bladeShared' => [
+        'copyright' => '© ' . date('Y'),
+        'settings' => Entry::find()->section('settings')->one(),
+    ],
+
+    'bladeDirectives' => [
+        'relativeTime' => function($expression) {
+            return "<?php echo Craft::\$app->getFormatter()->asRelativeTime($expression); ?>";
+        },
+    ],
+
+    'bladeStringables' => [
+        \DateTime::class => function($dateTime) {
+            return $dateTime->format('Y-m-d H:i');
+        },
+    ],
+
+    'bladeIfs' => [
+        'itsFriday' => function (): bool {
+            return date('N') === '5';
+        },
+    ],
+
+    'bladeComponents' => [
+        'alert' => Alert::class,
+    ],
+
+    'bladeViewComposers' => [
+        'config' => function ($view) {
+            $view->with('entriesCount', Entry::find()->section('*')->count());
+        },
+    ],
+];
+```
+
+Note while this seems convenient, you loose control when exactly customizations are registered. So this may have a negative impact on performance, e.g. when unnecessary queries are executed.
+
+### Custom View Helper Functions and Filters
+
+Helpers are regular PHP functions. Define them in regular PHP files that are required by your module/plugin. Note that loading via composer autoloading may not work because Craft is not initialized at that point.
+
 ### Common Blade Settings
 
 If multiple controllers are used, extend from a base controller to set common Blade settings:
@@ -859,4 +915,3 @@ global $asset;
 /** @var \craft\elements\Asset $image */
 global $image;
 ```
-

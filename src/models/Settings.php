@@ -55,15 +55,119 @@ class Settings extends Model
      */
     public array $bladeComponentPaths = [];
 
+    /**
+     * Additional shared variables for all Blade views.
+     *
+     * These are applied after Craft's Twig globals are shared (see `support/BladeShared.php`).
+     *
+     * Example:
+     *  - `'siteName' => fn() => Craft::$app->getSites()->getCurrentSite()->name`
+     *
+     * @var array<string, mixed>
+     */
+    public array $bladeShared = [];
+
+    /**
+     * Additional custom Blade directives.
+     *
+     * The array key is the directive name (without `@`).
+     * The value should be a callable with signature `function (string $expression): string`.
+     *
+     * Example:
+     *  - `'datetime' => fn($expression) => "<?php echo ({$expression})->format('Y-m-d'); ?>"`
+     *
+     * @var array<string, callable>
+     */
+    public array $bladeDirectives = [];
+
+    /**
+     * Additional Blade stringable handlers.
+     *
+     * Keys are class strings; values are callables that receive an instance and return a string.
+     *
+     * @var array<class-string, callable>
+     */
+    public array $bladeStringables = [];
+
+    /**
+     * Additional Blade conditionals (Laravel-style `Blade::if`).
+     *
+     * The array key is the conditional name.
+     * The value should be a callable returning a boolean.
+     *
+     * @var array<string, callable>
+     */
+    public array $bladeIfs = [];
+
+    /**
+     * Class-based Blade components to register at boot.
+     *
+     * This is a config-driven alternative to calling `Blade::component('alias', Class::class)`.
+     *
+     * Settings shape (map):
+     *
+     * ```php
+     * 'bladeComponents' => [
+     *     'alert' => \modules\main\components\Alert::class,
+     * ```
+     *
+     */
+    public array $bladeComponents = [];
+
+    /**
+     * View composers to register at boot.
+     *
+     * This is a config-driven alternative to calling `Blade::composer()`.
+     *
+     * Settings shape (map):
+     *
+     * ```php
+     * 'bladeViewComposers' => [
+     *     'components.article.latest' => function ($view) {
+     *         $view->with('latest', ...);
+     *     }
+     * ]
+     * ```
+     *
+     */
+    public array $bladeViewComposers = [];
+
     protected function defineRules(): array
     {
         return array_merge(parent::defineRules(), [
-            ['routePrefix', 'required'],
-            ['routePrefix', 'string'],
-            ['routePrefix', 'trim'],
-            // Keep it to a single URL segment (letters/numbers/dash/underscore).
-            ['routePrefix', 'match', 'pattern' => '/^[a-z0-9][a-z0-9_-]*$/i'],
-            // ...
+            // `bladeRoutePrefix` can be a string or an array of strings.
+            ['bladeRoutePrefix', 'required'],
+            ['bladeRoutePrefix', 'validateBladeRoutePrefix'],
         ]);
+    }
+
+    /**
+     * Validate the `bladeRoutePrefix` setting.
+     *
+     * Must be a single URL segment (no slashes) and limited to letters/numbers/dash/underscore.
+     */
+    public function validateBladeRoutePrefix(): void
+    {
+        $prefixes = $this->bladeRoutePrefix;
+        $prefixes = is_array($prefixes) ? $prefixes : [$prefixes];
+
+        foreach ($prefixes as $prefix) {
+            if (!is_string($prefix)) {
+                $this->addError('bladeRoutePrefix', 'Route prefix must be a string or an array of strings.');
+                return;
+            }
+
+            $prefix = trim($prefix);
+
+            if ($prefix === '') {
+                $this->addError('bladeRoutePrefix', 'Route prefix cannot be empty.');
+                return;
+            }
+
+            if (!preg_match('/^[a-z0-9][a-z0-9_-]*$/i', $prefix)) {
+                $this->addError('bladeRoutePrefix', 'Route prefix must be a single URL segment (letters/numbers/dash/underscore).');
+                return;
+            }
+        }
     }
 }

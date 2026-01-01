@@ -4,11 +4,15 @@ namespace wsydney76\blade\support;
 
 use Craft;
 use wsydney76\blade\Blade;
+use wsydney76\blade\BladePlugin;
 
 /**
  * Registers and compiles custom Blade directives.
  *
  * These directives are compiled into PHP at Blade compile-time.
+ *
+ * Built-in directives are registered first, followed by any custom directives configured
+ * via `Settings::$bladeDirectives`.
  *
  * Notes:
  * - Directive handlers receive the raw expression string from the template.
@@ -94,6 +98,10 @@ class BladeDirectives
         Blade::directive('endcache', function() {
             return static::compileCacheEnd();
         });
+
+        foreach (BladePlugin::getInstance()->getSettings()->bladeDirectives as $name => $handler) {
+            Blade::directive($name, $handler);
+        }
     }
 
     /**

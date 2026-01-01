@@ -21,6 +21,9 @@ use wsydney76\blade\models\Settings;
 use wsydney76\blade\support\BladeDirectives;
 use wsydney76\blade\support\BladeIfs;
 use wsydney76\blade\support\BladeShared;
+use wsydney76\blade\support\BladeStringables;
+use wsydney76\blade\support\BladeComponents;
+use wsydney76\blade\support\BladeViewComposers;
 use wsydney76\blade\web\twig\BladeTwigExtension;
 use yii\base\ErrorException;
 
@@ -76,6 +79,9 @@ class BladePlugin extends Plugin
             BladeDirectives::register();
             BladeShared::register();
             BladeIfs::register();
+            BladeStringables::register();
+            BladeComponents::register();
+            BladeViewComposers::register();
         });
     }
 
