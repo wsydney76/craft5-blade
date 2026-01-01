@@ -99,7 +99,7 @@ Path values support Craft aliases.
 
 If the `bladeViewsPath` is changed, you may need to adjust your IDE settings to recognize Blade templates in that directory.
 
-See [Customize](#customize) section for further configuration options.
+See [Customize](#config-driven-customization) section for further configuration options.
 
 ## Usage
 
