@@ -59,7 +59,6 @@ Run `ddev craft plugin/install _blade`.
 - Does not offer equivalent functionality for some advanced Craft Twig features/tags (e.g. `nav`).
 - Does not fully support [Template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization)
 - For now, only used for entry element type. Should work with other element types but not yet tested.
-- IDE support for Blade templates in Craft projects may be limited compared to Twig, e.g. there is no code completion for custom fields.
 - The central BladeBootstrap.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
 - Not yet reviewed in terms of performance/memory usage.
 - Support for Craft's Twig functions and filters is experimental.
@@ -794,3 +793,70 @@ Consider porting existing components to Twig using Sprig plugin or alike.
 Otherwise, you can integrate with Alpine.js (which is used by Livewire behind the scenes) to come somewhat close and keep most of your controller logic and templates.
 
 See [REACTIVECOMPONENTS.md](./REACTIVECOMPONENTS.md) for an example implementation of a reactive search component using Alpine.js.
+
+## IDE Support
+
+Make sure plugins supporting Laravel/Blade are installed and enabled. PhpStorm >= 2025.3 has some Laravel support built-in.
+
+### PhpStorm
+
+* Install the Laravel Idea plugin
+* PHP → Blade: Add custom directives for better code completion
+* Editor → General → Appearance: Check "Always enable Blade template highlighting"
+* Languages & Frameworks → Laravel Idea → Views: Check "Default Views Path"
+* Languages & Frameworks → Laravel Idea → Languages → Blade: Check "Blade component views directory"
+* Editor → Live Templates: You may want to add custom Blade snippets here for convenience.
+
+Examples:
+
+* Abbreviation: `bfor` (or anything unique you like)
+* Applicable in: HTML (not PHP!)
+* Edit Variables: ARRAY = `"$entries"`, VARIABLE = `"$entry"`, STUFF = `""`
+```
+@foreach($ARRAY$ as $VARIABLE$)
+    $STUFF$$END$
+@endforeach
+```
+
+* Abbreviation: `bnl2br` (or anything unique you like)
+* Applicable in: HTML (not PHP!)
+* Edit Variables: VARIABLE = `"$variable"`
+```
+{!! nl2br(e($VARIABLE$)) !!}
+```
+
+### Other IDEs
+
+No experience with other IDEs, but guessing that similar settings should be available.
+
+### Code Completion
+
+This should pick up custom fields for Craft elements, make sure `storage/runtime/compiled-classes` is indexed by your IDE (mark directory as 'not excluded', if necessary).
+
+Type hints can be added in Blade templates using `@php` blocks.
+
+```blade
+@php
+    /** @var \craft\elements\Entry $entry */
+@endphp
+
+<h1>{{ $entry->title }}</h1>
+
+<p> {{ $entry->myCustomField }}</p>
+```
+
+If you want to define type hints globally for common variables like `$entry`, place a PHP file anywhere where the IDE indexes it:
+
+```php
+<?php
+
+/** @var \craft\elements\Entry $entry */
+global $entry;
+
+/** @var \craft\elements\Asset $asset */
+global $asset;
+
+/** @var \craft\elements\Asset $image */
+global $image;
+```
+
