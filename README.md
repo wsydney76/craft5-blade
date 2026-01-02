@@ -385,13 +385,14 @@ This is mainly used for routes that do not correspond to Craft elements, e.g. st
 
 Examples (default prefix):
 
-- `/blade/articles` renders Blade view `articles`
-- `/blade/articles/list/bydate` renders Blade view `articles.list.bydate`
+- `/blade/articles` renders Blade view `blade.articles`
+- `/blade/articles/list/bydate` renders Blade view `blade.articles.list.bydate`
 
 Notes:
 
 - The `{view}` portion is treated as a slash-delimited path and is normalized to a dotted view name.
 - The endpoint is anonymous by default.
+- You are responsible for implementing appropriate security measures (e.g. access control, input validation, and sanitizing any user-provided data).
 
 To customize the prefix, add this to `config/_blade.php`:
 

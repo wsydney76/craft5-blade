@@ -119,7 +119,12 @@ class BladePlugin extends Plugin
                 }
                 foreach ($prefixes as $prefix) {
                     // `{view}` is captured as a slash-delimited path; the controller will sanitize it.
-                    $event->rules[$prefix . '/<view:.+>'] = '_blade/base-blade/render';
+                    $event->rules[$prefix . '/<view:.+>'] = [
+                        'route' => '_blade/base-blade/render',
+                        'params' => [
+                            'prefix' => $prefix,
+                        ],
+                    ];
                 }
             }
         );

@@ -192,8 +192,8 @@ Registration happens in `BladePlugin::attachEventHandlers()` via `UrlManager::EV
 
 Examples (default prefix):
 
-- `/blade/articles` → renders view `articles`
-- `/blade/articles/list/bydate` → renders view `articles.list.bydate`
+- `/blade/articles` → renders view `blade.articles`
+- `/blade/articles/list/bydate` → renders view `blade.articles.list.bydate`
 
 `{view}` is captured as a slash path (so nested URLs work). `BaseBladeController::actionRender()` normalizes it by converting slashes to dots and validating the name to prevent traversal-like input.
 

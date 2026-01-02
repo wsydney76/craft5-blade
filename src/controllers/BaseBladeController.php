@@ -56,8 +56,12 @@ class BaseBladeController extends Controller
      * @throws BadRequestHttpException If the view name is invalid.
      * @throws NotFoundHttpException If the view cannot be rendered.
      */
-    public function actionRender(string $view): string
+    public function actionRender(string $view, string $prefix = null): string
     {
+        if ($prefix) {
+            $view = $prefix . '/' . $view;
+        }
+
         $view = $this->normalizeViewName($view);
 
         $context = [];
@@ -90,6 +94,7 @@ class BaseBladeController extends Controller
      */
     private function normalizeViewName(string $view): string
     {
+
         $view = trim($view);
         $view = trim($view, "/ ");
         $view = str_replace('\\\u{0000}', '', $view);
