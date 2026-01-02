@@ -581,6 +581,8 @@ All [Craft global variables](https://craftcms.com/docs/5.x/reference/twig/global
 
 ## Helper Functions and Filters
 
+> For a mapping of Twigs built-in functions and filters to Blade helper functions, see the [TWIG_MAPPINGS.md](ai-generated-docs/TWIG_MAPPINGS.md) file.
+
 Experimental.
 
 As a first step towards supporting Craft's Twig functions and filters in Blade templates, the Craft Twig extension was thrown into AI, and the functions and filters were converted to standalone PHP functions in `BladeHelpers.php` and `BladeFilters.php`, along with some docs.
