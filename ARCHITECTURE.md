@@ -212,7 +212,7 @@ Custom controller actions can be setup using the usual Craft mechanisms and fina
 
 Those globals are then shared into Blade using `Blade::share($key, $value)`.
 
-Additionally, the plugin reads `Settings::$bladeShared` and shares those values afterwards.
+Additionally, the plugin reads `Settings::$bladeShared` and shares those values afterward.
 If a key collides, the configured value wins.
 
 This aims to make Blade templates feel closer to Twig templates by providing variables like:
@@ -372,6 +372,52 @@ For project-specific needs (e.g. always providing the current `Entry` as `$entry
 - The plugin translates certain routes into “render a Blade view”.
 - Blade runs inside a minimal Illuminate container.
 - Blade templates can call into Craft (globals, helpers, Twig rendering) as needed.
+
+## Illuminate/Support (what we use and why)
+
+Blade itself lives in the Illuminate ecosystem, and even when you “only” install Blade-related packages you effectively also pull in `illuminate/support`.
+
+In this plugin, **Illuminate/Support is treated as a utility library** that enables a Laravel-flavored developer experience (collections, helpers, macros) without pretending Craft is a full Laravel application.
+
+### What we rely on from `illuminate/support`
+
+`Illuminate/Support` provides several useful helper classes that can be used in views and PHP code, like:
+
+- **String helpers** (`Illuminate\Support\Str`):
+  - e.g. `Str::slug()`, `Str::startsWith()`, `Str::of()`, etc.
+- **Array helpers** (`Illuminate\Support\Arr`):
+  - e.g. `Arr::get()`, `Arr::set()`, `Arr::except()`, etc.
+
+This plugin does not use those helpers itself.
+
+`Collections` are provided by Craft itself.
+
+
+### What we intentionally *don’t* do with Support
+
+Laravel’s `illuminate/support` also contains **facades** (e.g. `Illuminate\Support\Facades\Blade`, `View`, `Cache`, etc.).
+
+In a normal Laravel app those facades are safe because the application container is fully bootstrapped and Laravel owns the request lifecycle.
+
+In Craft, we don’t have that complete environment, so the plugin avoids facade-driven APIs as a foundation.
+
+Instead:
+
+- The plugin provides its own stable public API via `wsydney76\blade\Blade` (see `src/Blade.php`).
+- Internally, `BladeBootstrap` wires only the minimum Illuminate services needed for Blade rendering.
+
+This keeps the integration predictable and reduces “half-Laravel” surprises.
+
+### Practical guidance (for plugin maintainers and project code)
+
+When writing PHP code that interacts with Blade in a Craft project:
+
+- Prefer `wsydney76\blade\Blade::...` methods over Laravel facades.
+- It’s fine to use `collect()` (and related collection operations) for convenience, especially when returning data to templates.
+- If you use macros on Illuminate classes, treat them like global state:
+    - register them once during plugin/app boot,
+    - document them,
+    - and avoid name collisions.
 
 ## Related docs
 

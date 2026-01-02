@@ -606,9 +606,10 @@ Possible next steps:
 
 * Testing...
 * Drop functions that have equivalents in Laravel Blade (e.g. dump, dd).
+* Drop functions that have equivalents in Laravel Helper classes? (e.g. Arr::xxx, Str::xxx).
 * Drop functions that map directly to PHP native functions (e.g. array handling).
 * Drop functions that map directly to Craft helper methods? (e.g. siteUrl() => UrlHelper::siteUrl()).
-* Drop functions that map directly to Craft services? (e.g. entryType() => Craft::$app->getEntries()->getEntryTypeByHandle()).
+* Drop functions that map directly to Craft services? (e.g. entryType() ⇒ Craft::$app->getEntries()->getEntryTypeByHandle()).
 * Implement as directives instead of functions in order to avoid escaping issues? (e.g. `@csrfInput` instead of `{!! csrfInput() !!}`).
 * Drop functions that will most likely never be used in a lifetime (e.g. `gql()`).
 * Implement Laravel style helper functions for common services? (e.g. `request()` vs. `Craft::$app->getRequest()`).
@@ -827,6 +828,35 @@ public function beforeAction($action): bool
         });
         return parent::beforeAction($action);
     }
+```
+
+## Laravel Helpers
+
+The plugin installs the `Illuminate/Support` package as a dependency, which provides Laravel's helper classes like `Arr`, `Str`, etc.
+
+You can use these classes in your Blade templates and PHP code as needed, which is especially useful when porting existing Laravel applications.
+
+Note that some functionality may not work as expected outside a full Laravel application context. This may especially apply to `facades`, because, well, there is nothing behind the facade.
+
+```blade
+@use('Illuminate\Support\Arr')
+@use('Illuminate\Support\Str')
+@use('Illuminate\Support\Number')
+@use('Illuminate\Support\Pluralizer')
+
+@dump(Arr::add(['name' => 'Desk'], 'price', 100))
+@dump(Arr::crossJoin([1, 2], ['a', 'b']))
+
+{{ Str::repeat('abc', 3) }}
+{{ Str::replaceFirst('_', ':', 'abc_def_ghi') }}
+
+{{ Number::ordinal(21) }}
+{{ Number::clamp(105, min: 10, max: 100) }}
+
+{{ Pluralizer::plural('item') }}  = items 
+{{ Pluralizer::plural('person', 3) }} = people
+{{ Pluralizer::singular('geese') }} = goose
+
 ```
 
 ## Clearing Cache

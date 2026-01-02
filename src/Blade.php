@@ -15,6 +15,12 @@ use craft\web\twig\variables\Paginate;
  * - Render views (`render`, `renderLocalized`)
  * - Register directives/conditionals/components
  * - Register Laravel-style view composers/creators
+ *
+ * Note that this class is distinct from `Illuminate\Support\Facades\Blade`,
+ * which is the Laravel framework's own Blade facade.
+ *
+ * We don't extend that class here or use other facades like 'View'
+ * because that may not work as expected outside of full Laravel context.
  */
 class Blade
 {
