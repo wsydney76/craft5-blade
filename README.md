@@ -852,6 +852,9 @@ Note that some functionality may not work as expected outside a full Laravel app
 {{ Str::repeat('abc', 3) }}
 {{ Str::replaceFirst('_', ':', 'abc_def_ghi') }}
 
+{{-- Fluent strings (Str::of) allow chaining operations in a readable way --}}
+{{ Str::of('  hello ? from ?  ')->trim()->replaceArray('?', ['world', 'blade'])->headline()->append('!') }}
+
 {{ Number::ordinal(21) }}
 {{ Number::clamp(105, min: 10, max: 100) }}
 
