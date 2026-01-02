@@ -951,3 +951,53 @@ global $asset;
 /** @var \craft\elements\Asset $image */
 global $image;
 ```
+
+### Using prettier for Blade/Tailwind formatting
+
+Example setup, adjust to your needs.
+
+Update your `package.json` to include `prettier-plugin-blade` and `prettier-plugin-tailwindcss`:
+
+```json
+{
+  "scripts": {
+    "prettier-views": "npx prettier --write \"resources/views\" --parser blade"
+  },
+  "devDependencies": {
+    "@prettier/plugin-php": "^0.24.0",
+    "prettier": "^3.6.2",
+    "prettier-plugin-blade": "^2.1.21",
+    "prettier-plugin-tailwindcss": "^0.6.14"
+  }
+}
+```
+
+Then run `npm install` to install the packages.
+
+Create a `.prettierrc` config file in your project root:
+
+```json
+{
+  "plugins": [
+    "@prettier/plugin-php",
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-blade"
+  ],
+  "singleQuote": true,
+  "tabWidth": 4,
+  "printWidth": 100,
+  "semi": true,
+  "trailingComma": "es5",
+  "tailwindStylesheet": "./resources/css/app.css"
+}
+```
+
+Run `npm run prettier-views` to format all Blade templates in the `resources/view` directory.
+
+PHPStorm settings (may differ for different versions):
+
+* Languages & Frameworks → JavaScript → Prettier:
+  * Include blade suffix in  `Run for files`: `**/*.{js,ts,jsx,tsx,cjs,cts,mjs,mts,json,vue,astro,blade.php,php}
+  * Check `Automatic prettier configuration`, `Run on save`, `Run on paste`, `Prefer prettier configuration to IDE code style`.
+* Tools → Actions on Save: Check `Run prettier`, disable `Reformat code`.
+* Languages & Frameworks → JavaScript → Runtime: Check that Node runtime is set correctly.
