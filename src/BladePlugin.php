@@ -46,6 +46,8 @@ class BladePlugin extends Plugin
      */
     public string $schemaVersion = '1.0.0';
 
+    public bool $hasCpSettings = true;
+
     public static function config(): array
     {
         return [
@@ -113,7 +115,8 @@ class BladePlugin extends Plugin
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             function(RegisterUrlRulesEvent $event): void {
-                foreach ($this->getSettings()->bladeRoutePrefixes as $prefix) {
+                $prefixes = explode(',', $this->getSettings()->bladeRoutePrefixes);
+                foreach ($prefixes as $prefix) {
                     // `{view}` is captured as a slash-delimited path; the controller will sanitize it.
                     $event->rules[$prefix . '/<view:.+>'] = [
                         'route' => '_blade/base-blade/render',
@@ -208,6 +211,17 @@ class BladePlugin extends Plugin
     protected function createSettingsModel(): ?Model
     {
         return new Settings();
+    }
+
+    protected function settingsHtml(): ?string
+    {
+        return Craft::$app->getView()->renderTemplate(
+            '_blade/_settings',
+            [
+                'settings' => $this->getSettings(),
+                'config' => Craft::$app->getConfig()->getConfigFromFile('_blade')
+            ]
+        );
     }
 
     /**

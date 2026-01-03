@@ -28,13 +28,6 @@ class Settings extends Model
     public string $bladeCachePath = '@runtime/blade/cache';
 
     /**
-     * Optional subdirectory within `bladeViewsPath`.
-     *
-     * (Currently unused by the bootstrapper, but kept for backwards compatibility/future use.)
-     */
-    public string $bladeViewsSubdir = '';
-
-    /**
      * Site route prefix for the view-rendering endpoint.
      *
      * With the default `blade`, URLs like `/blade/articles/list` will render the Blade view
@@ -42,7 +35,7 @@ class Settings extends Model
      *
      * Must be a single URL segment (no slashes).
      */
-    public string|array $bladeRoutePrefix = 'blade';
+    public string $bladeRoutePrefixes = 'blade';
 
     /**
      * Anonymous component paths.
@@ -132,40 +125,55 @@ class Settings extends Model
      */
     public array $bladeViewComposers = [];
 
+    /**
+     * IMPORTANT:
+     * Only settings that are editable in the CP UI (`src/templates/_settings.twig`) should be
+     * serialized/saved to Project Config.
+     *
+     * The remaining settings (shared vars/directives/ifs/stringables/components/view composers)
+     * are config-file-only and may contain callables, which must never be written to Project Config.
+     *
+     * @return array<int, string>
+     */
+    public function fields(): array
+    {
+        return [
+            'bladeViewsPath',
+            'bladeCachePath',
+            'bladeRoutePrefixes',
+            'bladeComponentPaths',
+        ];
+    }
+
     protected function defineRules(): array
     {
         return array_merge(parent::defineRules(), [
-            // `bladeRoutePrefix` can be a string or an array of strings.
-            ['bladeRoutePrefix', 'required'],
-            ['bladeRoutePrefix', 'validateBladeRoutePrefix'],
+            ['bladeViewsPath', 'required'],
+            ['bladeCachePath', 'required'],
+            ['bladeRoutePrefixes', 'validateBladeRoutePrefix'],
         ]);
     }
 
     /**
-     * Validate the `bladeRoutePrefix` setting.
+     * Validate the `bladeRoutePrefixes` setting.
      *
      * Must be a single URL segment (no slashes) and limited to letters/numbers/dash/underscore.
      */
     public function validateBladeRoutePrefix(): void
     {
-        $prefixes = $this->bladeRoutePrefix;
-        $prefixes = is_array($prefixes) ? $prefixes : [$prefixes];
+        $prefixes = explode(',', $this->bladeRoutePrefixes);
 
         foreach ($prefixes as $prefix) {
-            if (!is_string($prefix)) {
-                $this->addError('bladeRoutePrefix', 'Route prefix must be a string or an array of strings.');
-                return;
-            }
 
             $prefix = trim($prefix);
 
             if ($prefix === '') {
-                $this->addError('bladeRoutePrefix', 'Route prefix cannot be empty.');
+                $this->addError('bladeRoutePrefixes', 'Route prefix cannot be empty.');
                 return;
             }
 
             if (!preg_match('/^[a-z0-9][a-z0-9_-]*$/i', $prefix)) {
-                $this->addError('bladeRoutePrefix', 'Route prefix must be a single URL segment (letters/numbers/dash/underscore).');
+                $this->addError('bladeRoutePrefixes', 'Route prefix must be a single URL segment (letters/numbers/dash/underscore).');
                 return;
             }
         }

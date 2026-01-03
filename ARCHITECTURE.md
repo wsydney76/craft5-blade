@@ -32,6 +32,44 @@ Key locations in `blade/src/`:
   - `BladeHelpers.php` / `BladeFilters.php` — global PHP functions that mirror Craft Twig functions/filters (experimental).
 - `web/twig/BladeTwigExtension.php` — Twig function `renderBlade()`.
 
+## Control Panel settings
+
+The plugin exposes a **CP settings page** (because `BladePlugin::$hasCpSettings = true`).
+
+- Location: **Settings → Plugins → Blade** (`_blade`)
+
+Implementation details:
+
+- `BladePlugin::createSettingsModel()` returns `models/Settings.php`.
+- `BladePlugin::settingsHtml()` renders the CP template `src/templates/_settings.twig`.
+- The template is rendered with two variables:
+  - `settings` — the current `Settings` model instance (persisted to Project Config for UI-editable fields).
+  - `config` — the merged contents of `config/_blade.php` (via `Craft::$app->getConfig()->getConfigFromFile('_blade')`).
+
+### UI-editable vs config-only settings
+
+Only the settings that are editable in the CP UI are serialized and stored:
+
+- `bladeViewsPath`
+- `bladeCachePath`
+- `bladeRoutePrefixes`
+- `bladeComponentPaths`
+
+This is enforced by `Settings::fields()`.
+
+All other settings exposed on the `Settings` model (shared vars, directives, ifs, stringables, class components, view composers) are intentionally **config-file-only**, because they may contain callables and must not be written to Project Config.
+
+### Config overrides in the CP
+
+`src/templates/_settings.twig` uses the passed `config` array to show a warning in the UI if a setting is defined in `config/_blade.php`.
+
+Practically:
+
+- If `config.bladeViewsPath` exists, the `bladeViewsPath` field will show a warning and should be treated as read-only.
+- Same for `bladeCachePath`, `bladeRoutePrefixes`, and `bladeComponentPaths`.
+
+This mirrors Craft’s common plugin pattern: ".env / config wins, CP becomes informational".
+
 ## Core runtime components
 
 ### 1) `BladePlugin` (Craft plugin entrypoint)
@@ -188,7 +226,7 @@ Registration happens in `BladePlugin::attachEventHandlers()` via `UrlManager::EV
 - Route pattern: `/{routePrefix}/{view}`
 - Controller route: `_blade/base-blade/render`
 - Settings:
-  - `Settings::bladeRoutePrefixes` (default: `[blade]`). Is an array of strings, multiple routes will then be registered.
+  - `Settings::bladeRoutePrefixes` (default: `[blade]`). Comma separated values, multiple routes will then be registered.
 
 Examples (default prefix):
 

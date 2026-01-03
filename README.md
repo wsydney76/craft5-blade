@@ -44,6 +44,63 @@ Then run `composer update` to install the plugin.
 
 Run `ddev craft plugin/install _blade`.
 
+## Configuration
+
+Blade supports both **Control Panel settings** and a config file.
+
+### Control Panel settings page
+
+Once the plugin is installed, you can configure the runtime in the Craft CP:
+
+- **Settings → Plugins → Blade** (`_blade`)
+
+The CP settings UI currently exposes these settings:
+
+- `bladeViewsPath` — Base path where Blade views live (e.g. `@root/resources/views`).
+- `bladeCachePath` — Directory where compiled Blade templates are written (must be writable).
+- `bladeRoutePrefixes` — Comma-separated route prefixes for the direct URL rendering route.
+- `bladeComponentPaths` — Anonymous component directories, optionally namespaced by prefix (e.g. `ui` → `<x-ui-*>`).
+
+### Config file (`config/_blade.php`)
+
+If you want to customize Blade settings via code, create a config file at `config/_blade.php`.
+
+If a setting is defined in `config/_blade.php`, it **overrides** the CP value.
+Those overridden fields will show a warning in the CP and cannot be edited there.
+
+```php
+<?php
+
+use craft\helpers\App;
+
+return [
+    'bladeViewsPath' => App::env('BLADE_VIEWS_PATH') ?? '@templates/_blade',
+    'bladeCachePath' => App::env('BLADE_CACHE_PATH') ?? '@runtime/blade/cache',
+
+    // Anonymous component roots (optional)
+    'bladeComponentPaths' => [
+        ['path' => '@templates/_shared', 'prefix' => 'shared'],
+    ],
+
+    // Route prefix(es) for direct rendering URLs
+    // e.g. /pages/articles/list -> view "pages.articles.list"
+    'bladeRoutePrefixes' => 'pages,blog',
+];
+```
+
+where:
+
+* `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
+* `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
+* `bladeComponentPaths` - Additional anonymous component paths with (optional) prefixes.
+* `bladeRoutePrefixes` - Prefixes for URL routes pointing directly to Blade templates, defaults to `blade`. Comma separated values; multiple routes will then be registered.
+
+Path values support Craft aliases.
+
+If the `bladeViewsPath` is changed, you may need to adjust your IDE settings to recognize Blade templates in that directory.
+
+See [Customize](#config-driven-customization) section for further configuration options.
+
 ## Features
 
 - **Full Blade syntax support** - Use all Laravel Blade features including components, directives, and control structures
@@ -63,43 +120,6 @@ Run `ddev craft plugin/install _blade`.
 - Not yet reviewed in terms of performance/memory usage.
 - Support for Craft's Twig functions and filters is experimental.
 - Does not support Livewire-like reactive components out of the box.
-
-## Configuration
-
-If you want to customize Blade settings, create a config file at `config/_blade.php`.
-
-```php
-<?php
-
-use craft\helpers\App;
-
-return [
-    'bladeViewsPath' => App::env('BLADE_VIEWS_PATH') ?? '@templates/_blade',
-    'bladeCachePath' => App::env('BLADE_CACHE_PATH') ?? '@runtime/blade/cache',
-
-    // Anonymous component roots (optional)
-    'bladeComponentPaths' => [
-        ['path' => '@templates/_shared', 'prefix' => 'shared'],
-    ],
-
-    // Route prefix(es) for direct rendering URLs
-    // e.g. /pages/articles/list -> view "pages.articles.list"
-    'bladeRoutePrefixes' => ['pages', 'blog'],
-];
-```
-
-where:
-
-* `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
-* `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
-* `bladeComponentPaths` - Additional anonymous component paths with (optional) prefixes.
-* `bladeRoutePrefixes` - Prefixes for URL routes pointing directly to Blade templates, defaults to `[blade]`. Is an array of strings; multiple routes will then be registered.
-
-Path values support Craft aliases.
-
-If the `bladeViewsPath` is changed, you may need to adjust your IDE settings to recognize Blade templates in that directory.
-
-See [Customize](#config-driven-customization) section for further configuration options.
 
 ## Usage
 
@@ -381,7 +401,7 @@ The plugin registers a **site route** that can render a Blade view directly from
 This is mainly used for routes that do not correspond to Craft elements, e.g. static pages or special endpoints.
 
 - Default prefix: `blade`
-- Config key: `bladeRoutePrefixes` (plugin settings / `config/_blade.php`). Is an array of strings, multiple routes will then be registered. 
+- Config key: `bladeRoutePrefixes` (plugin settings / `config/_blade.php`). Comma separated values, multiple routes will then be registered. 
 
 Examples (default prefix):
 
@@ -398,7 +418,7 @@ To customize the prefix, add this to `config/_blade.php`:
 
 ```php
 return [
-    'bladeRoutePrefixes' => ['views', 'pages']
+    'bladeRoutePrefixes' => 'views,pages'
 ];
 ```
 
@@ -998,3 +1018,4 @@ PHPStorm settings (may differ for different versions):
   * Check `Automatic prettier configuration`, `Run on save`, `Run on paste`, `Prefer prettier configuration to IDE code style`.
 * Tools → Actions on Save: Check `Run prettier`, disable `Reformat code`.
 * Languages & Frameworks → JavaScript → Runtime: Check that Node runtime is set correctly.
+
