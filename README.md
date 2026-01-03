@@ -903,6 +903,68 @@ Otherwise, you can integrate with Alpine.js (which is used by Livewire behind th
 
 See [REACTIVECOMPONENTS.md](./REACTIVECOMPONENTS.md) for an example implementation of a reactive search component using Alpine.js.
 
+## Plugin Integration
+
+Craft plugins that work with Twig should also work with Blade
+
+* if they expose functionality via the Craft variable (e.g. `craft.thePlugin.doSomething`)
+* if they expose functionality via plain PHP classes/services
+
+Plugins that expose functionality via Twig extensions (functions, filters, tags) will not work out of the box.
+
+### Examples
+
+#### Vite
+
+```blade
+{!! $craft->vite->script('/resources/js/app.js', false) !!}
+```
+
+#### Imagerx
+
+Example component usage:
+
+```blade
+<x-image class="my-8" :image="$image" :transform="['width' => 768, 'ratio' => 25/9]" />
+```
+
+The component code (e.g. in `resources/views/components/image.blade.php`):
+
+```blade
+@props([
+    'image' => null,
+    'transform' => ['width' => 800, 'ratio' => 16 / 9],
+])
+@if ($image)
+    <img
+        {{ $attributes }}
+        src="{{ $craft->imagerx->transformImage($image, $transform) }}"
+        alt="{{ $image->alt ?? $image->title }}"
+    />
+@endif   
+```
+
+Or register the component globally in your module/plugin bootstrap:
+
+```php
+Blade::share('imagerx', Craft::$app->plugins->getPlugin('imager-x')->imager);
+```
+
+Then use it in Blade templates:
+
+```blade     
+src="{{ $imagerx->transformImage($image, $transform) }}"  
+```
+    
+#### Blitz
+
+Has to be confirmed, but guessing that Blitz does not care about the template engine used.
+
+```blade     
+@php($craft->blitz->options(['cachingEnabled' => false])) 
+```
+        
+
 ## IDE Support
 
 Make sure plugins supporting Laravel/Blade are installed and enabled. PhpStorm >= 2025.3 has some Laravel support built-in.
