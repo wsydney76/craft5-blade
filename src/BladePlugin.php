@@ -113,11 +113,7 @@ class BladePlugin extends Plugin
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             function(RegisterUrlRulesEvent $event): void {
-                $prefixes = $this->getSettings()->bladeRoutePrefix;
-                if (is_string($prefixes)) {
-                    $prefixes = [$prefixes];
-                }
-                foreach ($prefixes as $prefix) {
+                foreach ($this->getSettings()->bladeRoutePrefixes as $prefix) {
                     // `{view}` is captured as a slash-delimited path; the controller will sanitize it.
                     $event->rules[$prefix . '/<view:.+>'] = [
                         'route' => '_blade/base-blade/render',

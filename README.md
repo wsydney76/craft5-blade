@@ -83,8 +83,8 @@ return [
     ],
 
     // Route prefix(es) for direct rendering URLs
-    // e.g. /blade/articles/list -> view "articles.list"
-    'bladeRoutePrefix' => App::env('BLADE_ROUTE_PREFIX') ?? 'blade',
+    // e.g. /pages/articles/list -> view "pages.articles.list"
+    'bladeRoutePrefixes' => ['pages', 'blog'],
 ];
 ```
 
@@ -93,7 +93,7 @@ where:
 * `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
 * `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
 * `bladeComponentPaths` - Additional anonymous component paths with (optional) prefixes.
-* `bladeRoutePrefix` - Prefix for URL routes pointing directly to Blade templates, defaults to `blade`. Can be a string or an array of strings; multiple routes will then be registered.
+* `bladeRoutePrefixes` - Prefixes for URL routes pointing directly to Blade templates, defaults to `[blade]`. Is an array of strings; multiple routes will then be registered.
 
 Path values support Craft aliases.
 
@@ -139,7 +139,7 @@ Create `.blade.php` files in your views directory:
 
 ### Components
 
-Create reusable components in `resources/views/components/`:
+Create reusable components in `resources/views/components/` (or the paths configured in `config/_blade.php`):
 
 #### Anonymous components (view-only)
 
@@ -381,7 +381,7 @@ The plugin registers a **site route** that can render a Blade view directly from
 This is mainly used for routes that do not correspond to Craft elements, e.g. static pages or special endpoints.
 
 - Default prefix: `blade`
-- Config key: `bladeRoutePrefix` (plugin settings / `config/_blade.php`).Can be a string or an array of strings, multiple routes will then be registered. 
+- Config key: `bladeRoutePrefixes` (plugin settings / `config/_blade.php`). Is an array of strings, multiple routes will then be registered. 
 
 Examples (default prefix):
 
@@ -398,10 +398,7 @@ To customize the prefix, add this to `config/_blade.php`:
 
 ```php
 return [
-    // ...
-    'bladeRoutePrefix' => 'views',
-    // can be an array for multiple craft\web\assets\routes
-    'bladeRoutePrefix' => ['views', 'pages']
+    'bladeRoutePrefixes' => ['views', 'pages']
 ];
 ```
 

@@ -72,7 +72,7 @@ Settings input:
 - `Settings::$bladeViewsPath` — where source templates live (default: `@root/resources/views`).
 - `Settings::$bladeCachePath` — where compiled templates are written (default: `@runtime/blade/cache`).
 - `Settings::$bladeComponentPaths` — optional directories for anonymous components (mapped via `Blade::anonymousComponentPath`).
-- `Settings::$bladeRoutePrefix` — route prefix(es) for direct URL rendering.
+- `Settings::$bladeRoutePrefixes` — route prefix(es) for direct URL rendering.
 
 Extension points (config-driven):
 
@@ -188,7 +188,7 @@ Registration happens in `BladePlugin::attachEventHandlers()` via `UrlManager::EV
 - Route pattern: `/{routePrefix}/{view}`
 - Controller route: `_blade/base-blade/render`
 - Settings:
-  - `Settings::bladeRoutePrefix` (default: `blade`). Can be a string or an array of strings, multiple routes will then be registered.
+  - `Settings::bladeRoutePrefixes` (default: `[blade]`). Is an array of strings, multiple routes will then be registered.
 
 Examples (default prefix):
 
