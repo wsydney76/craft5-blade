@@ -83,7 +83,7 @@ class Settings extends Model
     public array $bladeStringables = [];
 
     /**
-     * Additional Blade conditionals (Laravel-style `Blade::if`).
+     * Additional Blade conditionals (Laravel-style `View::if`).
      *
      * The array key is the conditional name.
      * The value should be a callable returning a boolean.
@@ -95,7 +95,7 @@ class Settings extends Model
     /**
      * Class-based Blade components to register at boot.
      *
-     * This is a config-driven alternative to calling `Blade::component('alias', Class::class)`.
+     * This is a config-driven alternative to calling `View::component('alias', Class::class)`.
      *
      * Settings shape (map):
      *
@@ -110,7 +110,7 @@ class Settings extends Model
     /**
      * View composers to register at boot.
      *
-     * This is a config-driven alternative to calling `Blade::composer()`.
+     * This is a config-driven alternative to calling `View::composer()`.
      *
      * Settings shape (map):
      *

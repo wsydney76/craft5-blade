@@ -5,7 +5,7 @@ namespace wsydney76\blade\web\twig;
 use craft\helpers\Template;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 
 /**
  * Twig extension that provides Blade rendering capabilities within Twig templates.
@@ -28,7 +28,7 @@ class BladeTwigExtension extends AbstractExtension
             // Returns a Twig Markup/"raw" value so the Blade output isn't double-escaped by Twig.
             // Treat the Blade output as trusted HTML, similar to Twig's `|raw`.
             new TwigFunction('renderBlade', function(string $view, array $data = []) {
-               return Template::raw(Blade::renderTemplate($view, $data));
+               return Template::raw(View::renderTemplate($view, $data));
             }),
         ];
     }

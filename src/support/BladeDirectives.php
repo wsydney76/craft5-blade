@@ -3,7 +3,7 @@
 namespace wsydney76\blade\support;
 
 use Craft;
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 use wsydney76\blade\BladePlugin;
 
 /**
@@ -28,59 +28,59 @@ class BladeDirectives
     {
         // Render a Twig template and echo the result.
         // Example: @renderTwig('partials/_thing', ['foo' => 'bar'])
-        Blade::directive('renderTwig', function($expression) {
+        View::directive('renderTwig', function($expression) {
             return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
         });
 
         // Render first existing view from: `{siteHandle}.{view}` then `{view}`.
         // Example: @includeLocalized('partials.meta', ['entry' => $entry])
-        Blade::directive('includeLocalized', function($expression) {
+        View::directive('includeLocalized', function($expression) {
             return static::compileIncludeLocalized($expression);
         });
 
         // Guard directives (throw Yii HTTP exceptions)
-        Blade::directive('requireAdmin', function($expression) {
+        View::directive('requireAdmin', function($expression) {
             return "<?php if (!\\Craft::\$app->getUser()->getIsAdmin()) { throw new \\yii\\web\\ForbiddenHttpException('Admin access required.'); } ?>";
         });
 
-        Blade::directive('requireLogin', function($expression) {
+        View::directive('requireLogin', function($expression) {
             return "<?php if (\\Craft::\$app->getUser()->getIsGuest()) { throw new \\yii\\web\\UnauthorizedHttpException('Login required.'); } ?>";
         });
 
-        Blade::directive('requireGuest', function($expression) {
+        View::directive('requireGuest', function($expression) {
             return "<?php if (!\\Craft::\$app->getUser()->getIsGuest()) { throw new \\yii\\web\\ForbiddenHttpException('Guest access required.'); } ?>";
         });
 
-        Blade::directive('requirePermission', function($expression) {
+        View::directive('requirePermission', function($expression) {
             return "<?php if (!\\Craft::\$app->getUser()->checkPermission($expression)) { throw new \\yii\\web\\ForbiddenHttpException('Insufficient permissions.'); } ?>";
         });
 
         // Redirect and end the request.
         // Example: @redirect('/login', 302)
-        Blade::directive('redirect', function($expression) {
+        View::directive('redirect', function($expression) {
             return static::compileRedirect($expression);
         });
 
         // Execute arbitrary PHP expression/assignment.
         // Example: @set($foo = 'bar')
-        Blade::directive('set', function($expression) {
+        View::directive('set', function($expression) {
             return "<?php {$expression}; ?>";
         });
 
         // Create a paginator and export results + pageInfo into the template scope.
         // Example: @paginate($query, 'elements', 'pageInfo', ['pageSize' => 10])
-        Blade::directive('paginate', function($expression) {
+        View::directive('paginate', function($expression) {
             return static::compilePaginate($expression);
         });
 
         // Convert Markdown -> HTML and then purify.
-        Blade::directive('markdown', function($expression) {
+        View::directive('markdown', function($expression) {
             return static::compileMarkdown($expression);
         });
 
         // Set a single response header.
         // Usage: @header("Cache-Control: max-age=3600")
-        Blade::directive('header', function($expression) {
+        View::directive('header', function($expression) {
             return static::compileHeader($expression);
         });
 
@@ -91,16 +91,16 @@ class BladeDirectives
         //   @endcache
         //
         // Note: For now we support the no-args form (same as `{% cache %}` with no options).
-        Blade::directive('cache', function($expression) {
+        View::directive('cache', function($expression) {
             return static::compileCacheStart($expression);
         });
 
-        Blade::directive('endcache', function() {
+        View::directive('endcache', function() {
             return static::compileCacheEnd();
         });
 
         foreach (BladePlugin::getInstance()->getSettings()->bladeDirectives as $name => $handler) {
-            Blade::directive($name, $handler);
+            View::directive($name, $handler);
         }
     }
 
@@ -178,7 +178,7 @@ if (!is_array($__pgConfig)) {
     $__pgConfig = (array)$__pgConfig;
 }
 
-$__pgResult = \wsydney76\blade\Blade::paginate(
+$__pgResult = \wsydney76\blade\View::paginate(
     $__pgQuery,
     $__pgEntriesName,
     $__pgInfoName,

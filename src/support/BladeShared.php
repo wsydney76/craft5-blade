@@ -4,7 +4,7 @@ namespace wsydney76\blade\support;
 
 use Craft;
 use craft\web\twig\Extension;
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 use wsydney76\blade\BladePlugin;
 
 /**
@@ -29,11 +29,11 @@ class BladeShared
     public static function register(): void
     {
         foreach (static::getGlobals() as $key => $value) {
-            Blade::share($key, $value);
+            View::share($key, $value);
         }
 
         foreach (BladePlugin::getInstance()->getSettings()->bladeShared as $key => $value) {
-            Blade::share($key, $value);
+            View::share($key, $value);
         }
     }
 

@@ -2,11 +2,11 @@
 
 namespace wsydney76\blade\support;
 
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 use wsydney76\blade\BladePlugin;
 
 /**
- * Registers Blade "stringable" handlers (Laravel-style `Blade::stringable`).
+ * Registers Blade "stringable" handlers (Laravel-style `View::stringable`).
  *
  * Stringables allow you to customize how objects are converted to strings when they are
  * echoed in Blade templates.
@@ -23,7 +23,7 @@ class BladeStringables
     public static function register(): void
     {
         foreach (BladePlugin::getInstance()->getSettings()->bladeStringables as $class => $handler) {
-            Blade::stringable($class, $handler);
+            View::stringable($class, $handler);
         }
     }
 }

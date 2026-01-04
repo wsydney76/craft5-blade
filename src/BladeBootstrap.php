@@ -168,7 +168,7 @@ class BladeBootstrap
     }
 
     /**
-     * Register a custom Blade conditional (Blade::if equivalent).
+     * Register a custom Blade conditional (View::if equivalent).
      */
     public function if(string $name, callable $handler): void
     {

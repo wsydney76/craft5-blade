@@ -2,13 +2,13 @@
 
 namespace wsydney76\blade\support;
 
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 use wsydney76\blade\BladePlugin;
 
 /**
  * Registers class-based Blade components from plugin settings.
  *
- * This is a config-driven alternative to calling `Blade::component()` in module/plugin bootstrap.
+ * This is a config-driven alternative to calling `View::component()` in module/plugin bootstrap.
  *
  * Config key: `Settings::$bladeComponents`
  */
@@ -25,7 +25,7 @@ class BladeComponents
     public static function register(): void
     {
         foreach (BladePlugin::getInstance()->getSettings()->bladeComponents as $name => $class) {
-            Blade::component($name, $class);
+            View::component($name, $class);
         }
     }
 }

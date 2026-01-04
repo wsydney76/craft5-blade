@@ -130,7 +130,7 @@ class SearchController extends Controller
 
     public function actionIndex()
     {
-        return Blade::render('search', [
+        return View::render('search', [
             'entry' => Craft::$app->urlManager->getMatchedElement(),
             'q' => $this->q,
             'resultHtml' => $this->renderComponent()

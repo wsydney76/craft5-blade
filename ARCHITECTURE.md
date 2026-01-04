@@ -141,14 +141,14 @@ If your project stores component classes under a different root namespace, this 
 
 It’s the recommended way to interact with the runtime from PHP code:
 
-- `Blade::renderTemplate($view, $data = [])`
-- `Blade::renderLocalized($view, $data = [])` — tries `{siteHandle}.{view}` then `{view}`
-- `Blade::directive($name, $handler)`
-- `Blade::if($name, $handler)`
-- `Blade::share($key, $value)`
-- `Blade::component($alias, $class, $prefix = null)`
-- `Blade::composer($views, $callback)` / `Blade::creator(...)`
-- `Blade::paginate($query, ...)`
+- `View::renderTemplate($view, $data = [])`
+- `View::renderLocalized($view, $data = [])` — tries `{siteHandle}.{view}` then `{view}`
+- `View::directive($name, $handler)`
+- `View::if($name, $handler)`
+- `View::share($key, $value)`
+- `View::component($alias, $class, $prefix = null)`
+- `View::composer($views, $callback)` / `View::creator(...)`
+- `View::paginate($query, ...)`
 
 This also keeps the rest of the codebase from tightly coupling to the internal `BladeBootstrap` wiring.
 
@@ -164,7 +164,7 @@ This is the preferred “native” integration path for frontend requests, separ
 4. Supported section template values:
    - `action:controller/action`
      - Craft route is set directly to that controller/action.
-5. The controller action (your custom controller) calls `Blade::renderTemplate($view, $data)` and returns HTML.
+5. The controller action (your custom controller) calls `View::renderTemplate($view, $data)` and returns HTML.
 
 **Data inputs:** the template will have access to Craft’s shared globals (see “Global variables”).
 
@@ -183,7 +183,7 @@ This is an alternative “native” integration path for frontend requests.
     - `path/to/template.blade.php`
         - Converted to dotted view name (`path.to.template`)
         - routed to `"_blade/base-blade/render"` with `view` as route param.
-5. The controller action `BaseBladeController::actionRenderTemplate($view)` calls `Blade::renderTemplate($view)` and returns HTML.
+5. The controller action `BaseBladeController::actionRenderTemplate($view)` calls `View::renderTemplate($view)` and returns HTML.
 
 **Data inputs:** the template will have access to Craft’s shared globals (see “Global variables”).
 
@@ -204,7 +204,7 @@ If you need *additional* context beyond the matched element (prev/next entries, 
 If you’re still in Twig but want to delegate some rendering to Blade:
 
 1. Twig executes `renderBlade('some.view', {...})`.
-2. `BladeTwigExtension` returns `Template::raw(Blade::renderTemplate(...))`.
+2. `BladeTwigExtension` returns `Template::raw(View::renderTemplate(...))`.
 3. Twig receives a “raw markup” value and will not escape it again.
 
 This is useful for incremental migrations where Twig remains the primary template engine.
@@ -239,7 +239,7 @@ Security note: `BaseBladeController` allows anonymous access by default so this 
 
 ### Flow F: Custom controller → Blade template
 
-Custom controller actions can be setup using the usual Craft mechanisms and finally render Blade templates using `Blade::renderTemplate()`.
+Custom controller actions can be setup using the usual Craft mechanisms and finally render Blade templates using `View::renderTemplate()`.
 
 
 ## Global variables and shared state
@@ -248,7 +248,7 @@ Custom controller actions can be setup using the usual Craft mechanisms and fina
 
 `BladeShared::register()` instantiates Craft’s Twig `craft\web\twig\Extension` and calls `getGlobals()`.
 
-Those globals are then shared into Blade using `Blade::share($key, $value)`.
+Those globals are then shared into Blade using `View::share($key, $value)`.
 
 Additionally, the plugin reads `Settings::$bladeShared` and shares those values afterward.
 If a key collides, the configured value wins.
@@ -295,7 +295,7 @@ Included directives (non-exhaustive):
 - `@requireAdmin`, `@requireLogin`, `@requireGuest`, `@requirePermission(...)` — throw Yii HTTP exceptions
 - `@redirect(url, status = 302)` — sets response redirect and terminates request (`Craft::$app->end()`)
 - `@set(...)` — arbitrary PHP expression/assignment
-- `@paginate(...)` — uses `Blade::paginate()` and injects variables into scope
+- `@paginate(...)` — uses `View::paginate()` and injects variables into scope
 - `@markdown(...)` — uses global `markdown()` and `purify()` helper functions
 - `@header("Header: value")` — sets a response header
 - `@cache($options = []) ... @endcache` — template fragment caching using Craft’s TemplateCaches service (Twig `{% cache %}` equivalent)
@@ -342,7 +342,7 @@ Blade view names are **dotted** and map to filesystem paths.
 
 Example:
 
-- `Blade::renderTemplate('blog.entry')`
+- `View::renderTemplate('blog.entry')`
 - looks for `{bladeViewsPath}/blog/entry.blade.php`
 
 Anonymous components can be registered from arbitrary paths via settings `bladeComponentPaths`.
@@ -381,15 +381,15 @@ Because paths are resolved through `craft\helpers\App::parseEnv()`, you can use:
 Common ways to extend behavior:
 
 - Register directives:
-  - `Blade::directive('name', fn($expression) => '...compiled php...');`
+  - `View::directive('name', fn($expression) => '...compiled php...');`
 - Register conditionals:
-  - `Blade::if('feature', fn() => true/false);`
+  - `View::if('feature', fn() => true/false);`
 - Share globals:
-  - `Blade::share('key', $value);`
+  - `View::share('key', $value);`
 - Register class-based components:
-  - `Blade::component('alert', \App\View\Components\Alert::class);`
+  - `View::component('alert', \App\View\Components\Alert::class);`
 - Register view composers:
-  - `Blade::composer('blog.*', function ($view) { ... });`
+  - `View::composer('blog.*', function ($view) { ... });`
 
 Config-driven alternatives (in `config/_blade.php`):
 
@@ -450,7 +450,7 @@ This keeps the integration predictable and reduces “half-Laravel” surprises.
 
 When writing PHP code that interacts with Blade in a Craft project:
 
-- Prefer `wsydney76\blade\Blade::...` methods over Laravel facades.
+- Prefer `wsydney76\blade\View::...` methods over Laravel facades.
 - It’s fine to use `collect()` (and related collection operations) for convenience, especially when returning data to templates.
 - If you use macros on Illuminate classes, treat them like global state:
     - register them once during plugin/app boot,

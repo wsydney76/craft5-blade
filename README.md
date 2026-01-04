@@ -123,11 +123,9 @@ See [Customize](#config-driven-customization) for additional configuration optio
 
 ## Usage
 
-### The Blade singleton
+### The View singleton
 
-The main entry point for interacting with Blade is the `wsydney76\blade\Blade` class. 
-
-> We use the name `Blade` here instead of Laravel’s familiar `View` to avoid confusion with Craft’s own view layer.
+The main entry point for interacting with Blade is the `wsydney76\blade\View` class. 
 
 Missing methods can be added as needed.
 
@@ -291,9 +289,9 @@ Register class-based components in your module/plugin bootstrap:
 
 ```php
 use modules\main\components\EntriesList;
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 
-Blade::component('entries-list', EntriesList::class);
+View::component('entries-list', EntriesList::class);
 ```
 
 ##### 4) Use it in Blade
@@ -319,16 +317,16 @@ Supports dynamic components:
 Render Blade templates from plugins or controllers:
 
 ```php
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 
-Blade::renderTemplate('mytemplate', [
+View::renderTemplate('mytemplate', [
     'entries' => $entries
 ])
 ```
 Accepts an array of views, the first existing one will be used:
 
 ```php
-Blade::renderTemplate(['custom.template', 'fallback.template'], [
+View::renderTemplate(['custom.template', 'fallback.template'], [
     'data' => $data
 ])
 ```
@@ -340,7 +338,7 @@ return view('greeting')
     ->with('name', 'Victoria')
     ->with('occupation', 'Astronaut');
 
-return Blade::first(['custom.admin', 'admin'], $data);
+return View::first(['custom.admin', 'admin'], $data);
 ```
 
 ### Using Twig from Blade
@@ -378,7 +376,7 @@ In order to use Blade templates for Craft entries, set the template in the secti
 * `action:main/blog/show` by route (controller action)
 
 ```php
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 ...
 public function actionShow(): string
     {
@@ -391,7 +389,7 @@ public function actionShow(): string
             'section' => $entry->section->handle,
         ];
 
-        return Blade::renderTemplate('article', [
+        return View::renderTemplate('article', [
             'entry' => $entry,
             'prev' => $entry->getPrev($prevNextCriteria),
             'next' => $entry->getNext($prevNextCriteria)
@@ -442,7 +440,7 @@ return [
 
 ### Using custom controller actions
 
-Custom controller actions can be set up using the usual Craft mechanisms and finally render Blade templates using `Blade::renderTemplate()`.
+Custom controller actions can be set up using the usual Craft mechanisms and finally render Blade templates using `View::renderTemplate()`.
 
 ### Template Localization
 
@@ -454,7 +452,7 @@ PHP:
 
 ```php
 $currentSite = Craft::$app->getSites()->getCurrentSite();
-return Blade::renderTemplate(["{$currentSite->handle}.article.index", 'article.index'], [...]);
+return View::renderTemplate(["{$currentSite->handle}.article.index", 'article.index'], [...]);
 ```
 
 Blade:
@@ -470,7 +468,7 @@ Some helper functions are available to simplify this, but not fully tested yet:
 PHP:
 
 ```php
-Blade::renderLocalized('article.show', [...]);
+View::renderLocalized('article.show', [...]);
 ```
 
 Blade:
@@ -483,27 +481,27 @@ Blade:
 
 Experimental.
 
-#### PHP: Using Blade::paginate()
+#### PHP: Using View::paginate()
 
-Handle pagination in the controller using the `Blade::paginate()` helper method:
+Handle pagination in the controller using the `View::paginate()` helper method:
 
 ```php
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 ...
 
 public function actionIndex()
 {
-    return Blade::renderTemplate(
+    return View::renderTemplate(
             'posts.index',
             [
                 'entry' => Craft::$app->urlManager->getMatchedElement(),
-                ...Blade::paginate(Entry::find()->section('post')->limit(10), 'posts', 'pageInfo')
+                ...View::paginate(Entry::find()->section('post')->limit(10), 'posts', 'pageInfo')
             ],
         );
 }
 ```
 
-The `Blade::paginate()` method accepts:
+The `View::paginate()` method accepts:
 - `$query` - The element query, optionally with limit set
 - `$resultsKey` - The key name for results (default: 'elements')
 - `$pageInfoKey` - The key name for page info (default: 'pageInfo')
@@ -683,7 +681,7 @@ Customizations can be defined
 Define custom Blade directives in your plugin or module:
 
 ```php
-Blade::directive('datetime', function($expression) {
+View::directive('datetime', function($expression) {
     return "<?php echo ($expression)->format('Y-m-d H:i'); ?>";
 })
 ```
@@ -699,7 +697,7 @@ Usage in Blade templates:
 Share global data across all Blade templates:
 
 ```php
-Blade::share('settings', Entry::find()->section('settings')->one());
+View::share('settings', Entry::find()->section('settings')->one());
 ```
 
 Then access it in any Blade template:
@@ -717,7 +715,7 @@ This mimics Craft's `preloadSingles` feature for Twig templates. Kind of.
 Define custom Blade If statements in your plugin or module:
 
 ```php
-Blade::if('dev', function (): bool {
+View::if('dev', function (): bool {
     return Craft::$app->getConfig()->getGeneral()->devMode;
 });
 ```
@@ -742,7 +740,7 @@ Usage in Blade templates:
 Register custom stringable handlers to automatically format objects that don't implement a `__toString` method:
 
 ```php
-Blade::stringable(\DateTime::class, function($dateTime) {
+View::stringable(\DateTime::class, function($dateTime) {
     return $dateTime->format('Y-m-d H:i');
 });
 ```
@@ -758,12 +756,12 @@ Multiple stringables can be registered for different classes:
 
 ```php
 // Format DateTime objects
-Blade::stringable(\DateTime::class, function($dateTime) {
+View::stringable(\DateTime::class, function($dateTime) {
     return $dateTime->format('Y-m-d H:i');
 });
 
 // Format Money objects (example)
-Blade::stringable(Money\Money::class, function($money) {
+View::stringable(Money\Money::class, function($money) {
     if ($money === null) {
         return null;
     }
@@ -782,14 +780,14 @@ This lets you attach data to views globally or per-view, without having to pass 
 Register composers from your module/plugin:
 
 ```php
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 
-Blade::composer('article.show', function ($view) {
+View::composer('article.show', function ($view) {
     $view->with('composerMessage', 'Injected by a view composer');
 });
 
 // Wildcards are supported by the underlying Illuminate view factory:
-Blade::composer('*', function ($view) {
+View::composer('*', function ($view) {
     $view->with('composerMessage', 'Injected by a view composer');
 });
 ```
@@ -854,21 +852,21 @@ Helpers are regular PHP functions. Define them in regular PHP files that are req
 If multiple controllers are used, extend from a base controller to set common Blade settings:
 
 ```php
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 ...
 public function beforeAction($action): bool
     {
       
         // Share global settings entry
-        Blade::share('settings', Entry::find()->section('settings')->one());
+        View::share('settings', Entry::find()->section('settings')->one());
 
         // Register stringable for DateTime objects
-        Blade::stringable(\DateTime::class, function($dateTime) {
+        View::stringable(\DateTime::class, function($dateTime) {
             return $dateTime->format('Y-m-d H:i');
         });
 
         // Datetime directive
-        Blade::directive('datetime', function($expression) {
+        View::directive('datetime', function($expression) {
             return "<?php echo ($expression)->format('Y-m-d H:i'); ?>";
         });
         return parent::beforeAction($action);
@@ -973,7 +971,7 @@ The component code (e.g. in `resources/views/components/image.blade.php`):
 Or register the component globally in your module/plugin bootstrap:
 
 ```php
-Blade::share('imagerx', Craft::$app->plugins->getPlugin('imager-x')->imager);
+View::share('imagerx', Craft::$app->plugins->getPlugin('imager-x')->imager);
 ```
 
 Then use it in Blade templates:

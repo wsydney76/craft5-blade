@@ -22,7 +22,7 @@ use craft\web\twig\variables\Paginate;
  * We don't extend that class here or use other facades like 'View'
  * because that may not work as expected outside of full Laravel context.
  */
-class Blade
+class View
 {
     /**
      * Cached singleton instance resolved from `BladePlugin::getInstance()->blade`.
@@ -136,7 +136,7 @@ class Blade
     }
 
     /**
-     * Register a custom Blade conditional (equivalent to Laravel's `Blade::if`).
+     * Register a custom Blade conditional (equivalent to Laravel's `View::if`).
      *
      * Creates helper directives like `@auth ... @endauth` or `@guest`.
      */

@@ -5,7 +5,7 @@ namespace wsydney76\blade\controllers;
 use Craft;
 use craft\base\ElementInterface;
 use craft\web\Controller;
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 
@@ -74,7 +74,7 @@ class BaseBladeController extends Controller
         }
 
         try {
-            return Blade::renderTemplate($view, $context);
+            return View::renderTemplate($view, $context);
         } catch (\Throwable $e) {
             // Avoid leaking filesystem paths/details publicly.
             if (Craft::$app->getConfig()->getGeneral()->devMode) {
