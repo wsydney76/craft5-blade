@@ -39,8 +39,6 @@ $capsule->setAsGlobal();
 $capsule->bootEloquent();
 ```
 
-This project uses `illuminate/database` directly (no full Laravel app) and initializes it from the Craft module `modules/eloquent/EloquentModule.php`.
-
 ## Model example
 
 Here’s an example Eloquent model for a custom table (using Craft's `assets` table as an example):
@@ -130,10 +128,9 @@ Blade template:
 @foreach ($images as $image)
     {{ $image->filename }}
 @endforeach 
-{{ $images->links() }}
 
 <div class="mt-8">
-    @include('paginator.tailwind', ['paginator' => $images])
+    @include('paginator.simple-tailwind', ['paginator' => $images])
 </div>
 ```
 
