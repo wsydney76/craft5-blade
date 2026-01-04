@@ -65,7 +65,7 @@ Controller:
 ```php
 use modules\mymodule\models\Assets; 
 ...
-$assets = Assets::whereKind('image')->orderBy('filename')->get();
+$images = Assets::whereKind('image')->orderBy('filename')->get();
 ``` 
 
 Blade template:
@@ -86,39 +86,40 @@ This example relies on the `config/general.php` setting `pageTrigger`:
  ->pageTrigger('?page=')
 ```
 
+The native `paginate()` method won’t work out of the box, so you need to manually create a `LengthAwarePaginator` instance.
+
+This can be done by adding a macro in your Module/Plugin bootstrap (init method):
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+...
+
+Builder::macro('asCustomPaginator', function ($perPage = 12) {
+    /** @var Builder $this */
+    $page = Craft::$app->request->pageNum;
+    $offset = ($page - 1) * $perPage;
+    $totalCount = $this->count();
+    $items = $this->offset($offset)->limit($perPage)->get();
+
+    return new LengthAwarePaginator($items, $totalCount, $perPage, $page, [
+        'path' => Craft::$app->getRequest()->getAbsoluteUrl(),
+        'pageName' => 'page',
+    ]);
+});
+
+```
+
+Now you can replace `paginate()` with `asCustomPaginator` method in your queries.
+
 Controller:
 
 ```php
 public function actionShow()
 {
-    $query = Assets::whereKind('image')->orderBy('filename');
-    $images = $this->getPaginator($query, 8);
-
     return View::renderTemplate('test.index', [
-        'entry' => Craft::$app->urlManager->getMatchedElement(),
-        'images' => $images,
+        'images' => Assets::whereKind('image')->orderBy('filename')->asCustomPaginator(8),
     ]);
-}
-
-protected function getPaginator($query, $perPage = 12): LengthAwarePaginator
-{
-    $page = Craft::$app->request->pageNum;
-    $offset = ($page - 1) * $perPage;
-
-    $totalCount = $query->count();
-    $items = $query->offset($offset)->limit($perPage)->get();
-
-    $paginator = new LengthAwarePaginator(
-        $items, // Collection or array of items for the current page
-        $totalCount, // Total item count
-        $perPage, // Items per page
-        $page, // CURRENT PAGE (this is where it is set)
-        [
-            'path' => Craft::$app->getRequest()->getAbsoluteUrl(),
-            'pageName' => 'page',
-        ],
-    );
-    return $paginator;
 }
 ```
 
