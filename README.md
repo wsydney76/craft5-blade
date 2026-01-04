@@ -987,7 +987,14 @@ Needs confirmation, but guessing that Blitz does not care about the template eng
 ```blade     
 @php($craft->blitz->options(['cachingEnabled' => false])) 
 ```
-        
+
+## Using Eloquent ORM
+
+If a Laravel app is being ported to Craft CMS, you may want to keep using Eloquent ORM for accessing custom tables you don't want to migrate to Craft elements.
+
+See [ELOQUENT.md](./ELOQUENT.md) for a starting point on how to set up Eloquent in Craft CMS.
+
+You will finally want to migrate to Craft's `ActiveRecord` models, but this may help to get started quickly.
 
 ## IDE Support
 
