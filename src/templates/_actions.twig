@@ -1,0 +1,340 @@
+{#
+Call Craft web controller actions from JavaScript and display success/error notices
+
+Usage:
+
+Template:
+{% include '@extras/_actions.twig' with {baseUrl: currentSite.baseUrl|trim('/', 'right')} only %}
+
+See ACTIONS.md for details.
+
+Note:
+For simplicity and having just one file, all JS/HTML/CSS is included directly in each page's source code.
+
+Consider including this template only on pages where it is needed.
+
+Page template:
+{% do _globals.set('requireActions', true) %}
+
+...
+
+Layout template:
+{% if _globals.get('requireActions') %}
+    {% include '@extras/_actions.twig' with {} only %}
+{% endif %}
+#}
+
+
+{# Set to baseUrl of currentSite for multi-site projects #}
+{% set baseUrl = baseUrl ?? parseEnv('$PRIMARY_SITE_URL') %}
+
+<template id="actions-data"
+          data-baseurl="{{ baseUrl }}"
+          data-action-trigger="{{ craft.app.config.general.actionTrigger }}"
+          data-csrf-token="{{ craft.app.request.csrfToken }}">
+</template>
+
+<div id="notices-wrapper" class="notices-wrapper"></div>
+
+<script>
+
+const actionData = document.getElementById('actions-data').dataset
+
+window.Actions = {};
+
+window.Actions.postAction = async function(action, data = {}, callback = null, params = {}) {
+    const {
+        timeout = 20000,
+        handleFailuresInCallback = false,
+        logLevel = 'none',
+        indicatorSelector = null,
+        indicatorClass = 'fetch-request'
+    } = params;
+
+    const abortController = new AbortController();
+    let timeoutId;
+    if (timeout > 0) {
+        timeoutId = setTimeout(
+            () => abortController.abort(),
+            timeout
+        );
+    }
+
+    const indicator = indicatorSelector ? document.querySelector(indicatorSelector) : null;
+    if (indicator) {
+        indicator.classList.add(indicatorClass);
+    }
+
+    try {
+        const response = await fetch(actionData.baseurl + '/' + actionData.actionTrigger + '/' + action, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-Csrf-Token': actionData.csrfToken
+            },
+            body: JSON.stringify(data),
+            signal: abortController.signal
+        });
+
+        if (logLevel === 'info') {
+            console.log('Response: ', response);
+        }
+
+        if (timeout > 0) {
+            clearTimeout(timeoutId);
+        }
+
+        if (indicator) {
+            indicator.classList.remove(indicatorClass);
+        }
+
+        const {status, ok} = response;
+
+        const contentType = response.headers.get("content-type");
+        let body = null;
+        if (contentType && contentType.includes("application/json")) {
+            body = await response.json();
+        } else {
+            body = await response.text();
+        }
+
+        if (logLevel === 'info') {
+            console.log(status, body);
+        }
+
+        const message = body.message || '';
+
+        switch (status) {
+            case 200:
+                if (callback) {
+                    callback(body, status, ok);
+                } else {
+                    Actions.notice({type: 'success', text: message});
+                }
+                break;
+
+            case 400:
+                if (handleFailuresInCallback) {
+                    if (callback) {
+                        callback(body, status, ok);
+                    }
+                    break;
+                }
+
+                throw new Error(message, {cause: 'Failure'});
+
+            case 403:
+                throw new Error('403 - Forbidden. Not logged in or insufficient permissions.', {cause: 'Failure'});
+
+            default:
+                throw new Error(status + ' - ' + (message || 'Unspecified Error'));
+        }
+    } catch (error) {
+        if (logLevel === 'info' || logLevel === 'error') {
+            console.log('Catch: ', error);
+        }
+
+        if (indicator) {
+            indicator.classList.remove(indicatorClass);
+        }
+
+        let errorText = error.message;
+
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            errorText = 'Request timed out.';
+        } else if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+            errorText = 'Could not connect to server.';
+        }
+
+        Actions.notice({type: 'error', text: errorText});
+    }
+}
+
+window.Actions.errorsToString = function(errors, includeAttributeNames = false) {
+    let errorMessage = '';
+    for (const field in errors) {
+        const messages = errors[field];
+        errorMessage += (includeAttributeNames ? `${field.charAt(0).toUpperCase() + field.slice(1)}: ` : '') + messages.join(' ') + ' ';
+    }
+    return errorMessage;
+}
+
+window.Actions.notice = function(data) {
+    if (data.text === '') {
+        return;
+    }
+    window.dispatchEvent(new CustomEvent('actions.notice', {detail: data}));
+}
+
+window.Actions.success = function(message) {
+    window.Actions.notice({type: 'success', text: message})
+}
+
+window.Actions.error = function(message) {
+    window.Actions.notice({type: 'error', text: message})
+}
+
+window.Actions.pushState = function(params, deleteExisting = false) {
+    const url = new URL(window.location);
+
+    // Optionally clear all existing search params
+    if (deleteExisting) {
+        url.search = '';
+    }
+
+    // Handle both array and object formats
+    let paramList = [];
+    if (Array.isArray(params)) {
+        paramList = params;
+    } else {
+        paramList = Object.keys(params);
+    }
+
+    paramList.forEach((param) => {
+        const value = this[param] ?? '';
+        if (value) {
+            url.searchParams.set(param, value);
+        } else {
+            url.searchParams.delete(param);
+        }
+    });
+    window.history.pushState({}, '', url);
+}
+
+/*
+Alpine specific:
+- window.Actions.popState.call(this, ['q', 'scope'], () => this.fetch(false))
+- window.Actions.popState.call(this, {q: '', scope: 'product'}, () => this.fetch(false))
+*/
+window.Actions.popState = function (params, callback) {
+    const search = new URLSearchParams(window.location.search);
+
+    // Handle both array and object formats
+    if (Array.isArray(params)) {
+        params.forEach((param) => {
+            this[param] = search.get(param) || '';
+        });
+    } else {
+        // params is an object with default values
+        for (const [param, defaultValue] of Object.entries(params)) {
+            this[param] = search.get(param) || defaultValue || '';
+        }
+    }
+
+    if (typeof callback === 'function') {
+        callback(false);
+    }
+}
+
+class NoticesHandler {
+    constructor() {
+        this.notices = [];
+        this.visible = [];
+        this.noticeWrapper = document.getElementById('notices-wrapper');
+        this.duration = 4000;
+        window.addEventListener('actions.notice', (event) => this.add(event.detail));
+    }
+
+    add(notice) {
+        notice.id = Date.now();
+        this.notices.push(notice);
+        this.fire(notice.id);
+    }
+
+    fire(id) {
+        const notice = this.notices.find(notice => notice.id === id);
+        if (notice) {
+            this.visible.push(notice);
+            this.render();
+
+            const timeShown = this.duration * this.visible.length;
+            setTimeout(() => {
+                this.remove(id);
+            }, timeShown);
+        }
+    }
+
+    remove(id) {
+        const index = this.visible.findIndex(notice => notice.id === id);
+        if (index > -1) {
+            this.visible.splice(index, 1);
+            this.render();
+        }
+    }
+
+    render() {
+        this.noticeWrapper.innerHTML = '';
+
+        this.visible.forEach(notice => {
+            const noticeDiv = document.createElement('div');
+            noticeDiv.classList.add('notices-item');
+
+            noticeDiv.textContent = notice.text;
+
+            noticeDiv.classList.add(notice.type === 'error' ? 'notice-error' : 'notice-success');
+
+            noticeDiv.setAttribute('role', 'alert');
+            noticeDiv.setAttribute('aria-live', 'assertive');
+
+            noticeDiv.addEventListener('click', () => this.remove(notice.id));
+
+            this.noticeWrapper.appendChild(noticeDiv);
+
+            // stack on top, better if notices are placed at the bottom
+            // this.noticeWrapper.insertBefore(noticeDiv, this.noticeWrapper.firstChild);
+
+        });
+    }
+}
+
+const noticesHandler = new NoticesHandler();
+</script>
+
+<style>
+.notices-wrapper {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    flex-direction: column;
+    align-items: center; /* self-start, self-end for left/right */
+    justify-content: flex-start; /* flex-end for bottom */
+}
+
+
+.notices-item {
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 9999;
+    margin: 0.5rem;
+    display: flex;
+    width: 24rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    padding: 0.5rem 2rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    box-shadow: 4px 4px 16px -6px rgba(0, 0, 0, 0.5);
+}
+
+
+.notice-success {
+    background-color: #16a34a; /* green-600 */
+    color: white;
+}
+
+.notice-error {
+    background-color: #dc2626; /* red-600 */
+    color: white;
+}
+
+</style>
+
+{# For fetch logic see: https://stackoverflow.com/questions/40248231/how-to-handle-http-code-4xx-responses-in-fetch-api #}
+{# For notice component see: https://codepen.io/KevinBatdorf/pen/JjGKbMa?css-preprocessor=none, converted to vanilla JavaScript #}

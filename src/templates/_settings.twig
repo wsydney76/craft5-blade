@@ -1,0 +1,73 @@
+{# @var settings \wsydney76\blade\models\Settings #}
+
+{% import "_includes/forms" as forms %}
+
+{{ forms.autosuggestField({
+    first: true,
+    label: "Blade views path"|t("_blade"),
+    instructions: "Base path where Blade view files live."|t("_blade"),
+    id: "bladeViewsPath",
+    name: "bladeViewsPath",
+    value: settings.bladeViewsPath,
+    placeholder: "@root/resources/views",
+    suggestEnvVars: true,
+    suggestions: craft.cp.getEnvSuggestions(),
+    errors: settings.getErrors("bladeViewsPath"),
+    required: true,
+    tip: "Can be a Craft alias and/or environment variable."|t("_blade"),
+    warning: config.bladeViewsPath is defined ? _self.configWarning('bladeViewsPath')
+}) }}
+
+{{ forms.autosuggestField({
+    label: "Blade cache path"|t("_blade"),
+    instructions: "Directory where compiled Blade templates are written. Must be writable."|t("_blade"),
+    id: "bladeCachePath",
+    name: "bladeCachePath",
+    value: settings.bladeCachePath,
+    placeholder: "@runtime/blade/cache",
+    suggestEnvVars: true,
+    suggestions: craft.cp.getEnvSuggestions(),
+    errors: settings.getErrors("bladeCachePath"),
+    required: true,
+    tip: "Can be a Craft alias and/or environment variable."|t("_blade"),
+    warning: config.bladeCachePath is defined ? _self.configWarning('bladeCachePath')
+}) }}
+
+
+{{ forms.textField({
+    label: "Route prefixes"|t("_blade"),
+    instructions: "One or more URL prefixes used for the Blade rendering route (single segment; letters/numbers/dash/underscore)."|t("_blade"),
+    id: "bladeRoutePrefixes",
+    name: "bladeRoutePrefixes",
+    value: settings.bladeRoutePrefixes,
+    placeholder: "blade",
+    errors: settings.getErrors("bladeRoutePrefixes"),
+    warning: config.bladeRoutePrefixes is defined ? _self.configWarning('bladeRoutePrefixes')
+}) }}
+
+{{ forms.editableTableField({
+    label: "Blade component paths"|t("_blade"),
+    instructions: "Anonymous component directories, optionally namespaced by prefix (e.g. prefix=ui gives you <x-ui-*>)."|t("_blade"),
+    id: "bladeComponentPaths",
+    name: "bladeComponentPaths",
+    cols: {
+        path: {
+            heading: "Path"|t("_blade"),
+            type: "singleline",
+            placeholder: "@root/resources/views/components"
+        },
+        prefix: {
+            heading: "Prefix"|t("_blade"),
+            type: "singleline",
+            placeholder: "ui"
+        }
+    },
+    rows: settings.bladeComponentPaths ?? [],
+    addRowLabel: "Add a component path"|t("_blade"),
+    tip: "Values can be a Craft alias and/or environment variable."|t("_blade"),
+    warning: config.bladeComponentPaths is defined ? _self.configWarning('bladeComponentPaths')
+}) }}
+
+{% macro configWarning(setting) -%}
+    {{ 'This is being overridden by the `{setting}` config setting and cannot be changed here.'|t('_extras', {setting: setting })|markdown(inlineOnly=true) }}
+{%- endmacro %}

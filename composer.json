@@ -1,0 +1,35 @@
+{
+  "name": "wsydney76/craft5-blade",
+  "description": "Enables Blade templates for Craft CMS",
+  "type": "craft-plugin",
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.8.0",
+    "illuminate/view": "^v10.49.0",
+    "illuminate/events": "^v10.49.0",
+    "illuminate/filesystem": "^v10.49.0",
+    "illuminate/config": "^v10.49.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "wsydney76\\blade\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "_blade",
+    "name": "Blade",
+    "developer": "wsydney76",
+    "documentationUrl": "https://github.com/wsydney76/craft5-blade",
+    "class": "wsydney76\\blade\\BladePlugin"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}
