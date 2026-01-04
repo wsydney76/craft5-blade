@@ -1,8 +1,8 @@
 # Blade
 
-Enables Laravel Blade templates for Craft CMS, providing a modern templating engine alternative to Twig.
+Enables Laravel Blade templates in Craft CMS as a modern alternative to Twig.
 
-Readme work in progress (and partially AI generated, so...).
+README is a work in progress and partially AI-generated.
 
 See [Architecture Overview](./ARCHITECTURE.md) for implementation details.
 
@@ -18,11 +18,11 @@ Functionality will only be fixed or improved as needed.
 
 This plugin requires Craft CMS 5.8.0 or later, and PHP 8.2 or later.
 
-Internally, requires `illuminate` packages (Laravel's Blade engine etc) version 10.x, matching the version Craft CMS 5.x uses for Laravel collections.
+Internally, it uses the Laravel Illuminate packages (including Blade) version 10.x, matching the version Craft CMS 5.x uses for Laravel collections.
 
 ## Installation
 
-Add to `composer.json` file in your project root to require this plugin:
+Add this to the `composer.json` file in your project root to require the plugin:
 
 ```json
 {
@@ -42,11 +42,11 @@ Add to `composer.json` file in your project root to require this plugin:
 
 Then run `composer update` to install the plugin.
 
-Run `ddev craft plugin/install _blade`.
+Install the plugin: `ddev craft plugin/install _blade`.
 
 ## Configuration
 
-Blade supports both **Control Panel settings** and a config file.
+Blade supports both **Control Panel (CP) settings** and a config file.
 
 ### Control Panel settings page
 
@@ -54,7 +54,7 @@ Once the plugin is installed, you can configure the runtime in the Craft CP:
 
 - **Settings → Plugins → Blade** (`_blade`)
 
-The CP settings UI currently exposes these settings:
+The CP settings page currently exposes these settings:
 
 - `bladeViewsPath` — Base path where Blade views live (e.g. `@root/resources/views`).
 - `bladeCachePath` — Directory where compiled Blade templates are written (must be writable).
@@ -88,35 +88,35 @@ return [
 ];
 ```
 
-where:
+Settings:
 
-* `bladeViewsPath` - Path to Blade views directory, defaults to `@root/resources/views`
-* `bladeCachePath` - Path to Blade compiled templates cache directory, defaults to `@runtime/blade/cache`
-* `bladeComponentPaths` - Additional anonymous component paths with (optional) prefixes.
-* `bladeRoutePrefixes` - Prefixes for URL routes pointing directly to Blade templates, defaults to `blade`. Comma separated values; multiple routes will then be registered.
+* `bladeViewsPath` — Path to the Blade views directory. Defaults to `@root/resources/views`.
+* `bladeCachePath` — Path to the compiled Blade template cache directory. Defaults to `@runtime/blade/cache`.
+* `bladeComponentPaths` — Additional anonymous component paths with (optional) prefixes.
+* `bladeRoutePrefixes` — Prefixes for URL routes pointing directly to Blade templates. Defaults to `blade`. Comma-separated values; multiple routes will be registered.
 
-Path values support Craft aliases.
+Path values support Craft aliases (e.g. `@root`, `@runtime`).
 
 If the `bladeViewsPath` is changed, you may need to adjust your IDE settings to recognize Blade templates in that directory.
 
-See [Customize](#config-driven-customization) section for further configuration options.
+See [Customize](#config-driven-customization) for additional configuration options.
 
 ## Features
 
-- **Full Blade syntax support** - Use all Laravel Blade features including components, directives, and control structures
-- **Blade components** - Create and use reusable components with props
-- **Custom directives** - Define custom Blade directives for your application
-- **Twig integration** - Call Twig templates from Blade using the `@renderTwig()` directive
-- **Global data sharing** - Access Craft global variables in Blade templates (like `craft`, site name, etc.)
-- **Template inheritance** - Use Blade's powerful layout system with `@extends` and `@section`
+- **Full Blade syntax support** — Use Laravel Blade features including components, directives, and control structures.
+- **Blade components** — Create and use reusable components with props.
+- **Custom directives** — Define custom Blade directives for your application.
+- **Twig integration** — Call Twig templates from Blade using the `@renderTwig()` directive.
+- **Global data sharing** — Access Craft global variables in Blade templates (like `craft`, site name, etc.).
+- **Template inheritance** — Use Blade's powerful layout system with `@extends` and `@section`.
 
 ## Limitations
 
-- Does not support Laravel-specific helper functions and blade directives that depend on Laravel features not present in Craft CMS.
+- Does not support Laravel-specific helper functions and Blade directives that depend on Laravel features not present in Craft CMS.
 - Does not offer equivalent functionality for some advanced Craft Twig features/tags (e.g. `nav`).
 - Does not fully support [Template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization)
-- For now, only used for entry element type. Should work with other element types but not yet tested.
-- The central BladeBootstrap.php class is mostly AI generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
+- Currently only used with the Entry element type. Other element types may work but are not yet tested.
+- The central `BladeBootstrap.php` class is mostly AI-generated and may look like a complete mess for Laravel/Blade experts. But it works for the tested use cases...
 - Not yet reviewed in terms of performance/memory usage.
 - Support for Craft's Twig functions and filters is experimental.
 - Does not support Livewire-like reactive components out of the box.
@@ -131,11 +131,11 @@ The main entry point for interacting with Blade is the `wsydney76\blade\Blade` c
 
 Missing methods can be added as needed.
 
-### Basic Setup
+### Basic setup
 
 Create your Blade templates in the `resources/views` directory (or the path configured in `config/_blade.php`).
 
-Template cache is stored in `storage/runtime/blade/cache` (or the path configured in `config/_blade.php`).
+The template cache is stored in `storage/runtime/blade/cache` (or the path configured in `config/_blade.php`).
 
 ### Creating Blade Templates
 
@@ -204,7 +204,7 @@ Anonymous components are just Blade views in your components folder.
 @endif
 ```
 
-Use components with:
+Use the components like this:
 ```blade
 <x-layout title="My Page">
     <x-image :image="$entry->image->one()" width="600" height="400" />
@@ -419,7 +419,7 @@ The plugin registers a **site route** that can render a Blade view directly from
 This is mainly used for routes that do not correspond to Craft elements, e.g. static pages or special endpoints.
 
 - Default prefix: `blade`
-- Config key: `bladeRoutePrefixes` (plugin settings / `config/_blade.php`). Comma separated values, multiple routes will then be registered. 
+- Config key: `bladeRoutePrefixes` (plugin settings / `config/_blade.php`). Comma-separated values; multiple routes will be registered. 
 
 Examples (default prefix):
 
@@ -429,8 +429,8 @@ Examples (default prefix):
 Notes:
 
 - The `{view}` portion is treated as a slash-delimited path and is normalized to a dotted view name.
-- The endpoint is anonymous by default.
-- You are responsible for implementing appropriate security measures (e.g. access control, input validation, and sanitizing any user-provided data).
+- The endpoint is accessible anonymously by default.
+- You’re responsible for implementing appropriate security measures (e.g. access control, input validation, and sanitization of user-provided data).
 
 To customize the prefix, add this to `config/_blade.php`:
 
@@ -442,13 +442,13 @@ return [
 
 ### Using custom controller actions
 
-Custom controller actions can be setup using the usual Craft mechanisms and finally render Blade templates using `Blade::renderTemplate()`.
+Custom controller actions can be set up using the usual Craft mechanisms and finally render Blade templates using `Blade::renderTemplate()`.
 
 ### Template Localization
 
-Blade by default can't know anything about Craft's [template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization).
+By default, Blade has no awareness of Craft's [template localization](https://craftcms.com/docs/5.x/development/templates.html#template-localization).
 
-As a workaround, pass an array of possible localized template to Blade where needed:
+As a workaround, pass an array of possible localized templates to Blade where needed:
 
 PHP:
 
@@ -538,7 +538,7 @@ Both methods provide `$posts` with the page results and `$pageInfo` with paginat
 
 <p>
     Showing page {{ $pageInfo->currentPage }} of {{ $pageInfo->totalPages }}.
-    
+
     @if($pageInfo->currentPage > 1)
         <a href="{{ $pageInfo->getPrevUrl() }}">Previous page</a>
     @endif
@@ -616,13 +616,13 @@ All [Craft global variables](https://craftcms.com/docs/5.x/reference/twig/global
 
 ## Helper Functions and Filters
 
-> For a mapping of Twigs built-in functions and filters to Blade helper functions, see the [TWIG_MAPPINGS.md](ai-generated-docs/TWIG_MAPPINGS.md) file.
+> For a mapping of Twig’s built-in functions and filters to Blade helper functions, see the [TWIG_MAPPINGS.md](ai-generated-docs/TWIG_MAPPINGS.md) file.
 
 Experimental.
 
-As a first step towards supporting Craft's Twig functions and filters in Blade templates, the Craft Twig extension was thrown into AI, and the functions and filters were converted to standalone PHP functions in `BladeHelpers.php` and `BladeFilters.php`, along with some docs.
+As a first step towards supporting Craft's Twig functions and filters in Blade templates, the Craft Twig extension was fed into an AI model, and the functions and filters were converted to standalone PHP functions in `BladeHelpers.php` and `BladeFilters.php`, along with some docs.
 
-Publishing these results here unedited and untested for further evaluation, but no guarantees regarding completeness or correctness.
+These results are published here unedited and untested for evaluation; no guarantees are made regarding completeness or correctness.
 
 Blade helper functions are automatically available in your templates and include:
 
@@ -631,11 +631,11 @@ Blade helper functions are automatically available in your templates and include
 - **HTML helpers** - Common HTML output functions
 - **Translation helper** - `__()` function for translation
 
-See  [BLADE_FUNCTIONS_MAPPING.md](ai-generated-docs/BLADE_FUNCTIONS_MAPPING.md) and [HELPER_FILTERS_MAPPING.md](./ai-generated-docs/BLADE_FILTERS_MAPPING.md) for mapping to Craft's core funtionality.
+See [BLADE_FUNCTIONS_MAPPING.md](ai-generated-docs/BLADE_FUNCTIONS_MAPPING.md) and [HELPER_FILTERS_MAPPING.md](./ai-generated-docs/BLADE_FILTERS_MAPPING.md) for mapping to Craft's core functionality.
 
-See  [BLADE_FUNCTIONS_QUICK_REFERENCE.md](ai-generated-docs/BLADE_FUNCTIONS_QUICK_REFERENCE.md) and [BLADE_FILTERS_QUICK_REFERENCE](./ai-generated-docs/BLADE_FILTERS_QUICK_REFERENCE.md) for mapping to Craft's core funtionality.
+See [BLADE_FUNCTIONS_QUICK_REFERENCE.md](ai-generated-docs/BLADE_FUNCTIONS_QUICK_REFERENCE.md) and [BLADE_FILTERS_QUICK_REFERENCE](./ai-generated-docs/BLADE_FILTERS_QUICK_REFERENCE.md) for mapping to Craft's core functionality.
 
-In the current state of this PoC, no further work will be done, accept fixing concrete issues as they arise.
+In the current state of this PoC, no further work is planned except for fixing concrete issues as they arise.
 
 Note that some functions and filters must not be escaped in Blade templates to work correctly, e.g. HTML output functions like `csrfInput()`. Use `{!! ... !!}` instead of `{{ ... }}` for these.
 
@@ -669,6 +669,14 @@ The following Blade directives are predefined:
 - `@cache($options = []) ... @endcache` - Template fragment caching (Craft’s Twig `{% cache %}` equivalent)
 
 ## Customize
+
+Blade can be customized from your module or plugin by registering custom directives, components, stringables, shared data, view composers, etc.
+
+Customizations can be defined 
+
+* in your controller (preferred for best granular control),
+* in the `init()` method of your module/plugin bootstrap class (place in `Craft::$app->onInit` callback to ensure Craft is fully initialized),
+* or in the `config/_blade.php` config file (see [Config-driven Customization](#config-driven-customization) below).
 
 ### Custom Directives
 
@@ -835,7 +843,7 @@ return [
 ];
 ```
 
-Note while this seems convenient, you loose control when exactly customizations are registered. So this may have a negative impact on performance, e.g. when unnecessary queries are executed.
+Note: while this seems convenient, you lose control over when exactly customizations are registered. So this may have a negative impact on performance, e.g. when unnecessary queries are executed.
 
 ### Custom View Helper Functions and Filters
 
@@ -915,7 +923,7 @@ The template cache has to be cleared when Blade custom directives are updated.
 
 Livewire-like reactive components are not supported, as Livewire is deeply bound to core Laravel. 
 
-Consider porting existing components to Twig using Sprig plugin or alike.
+Consider porting existing components to Twig using the Sprig plugin (or similar).
 
 Otherwise, you can integrate with Alpine.js (which is used by Livewire behind the scenes) to come somewhat close and keep most of your controller logic and templates.
 
@@ -976,7 +984,7 @@ src="{{ $imagerx->transformImage($image, $transform) }}"
     
 #### Blitz
 
-Has to be confirmed, but guessing that Blitz does not care about the template engine used.
+Needs confirmation, but guessing that Blitz does not care about the template engine used.
 
 ```blade     
 @php($craft->blitz->options(['cachingEnabled' => false])) 

@@ -4,14 +4,14 @@ __Note: This document is AI generated, unedited, untested. So may be correct or 
 
 This document describes the internal architecture of the **Blade** plugin (`wsydney76/craft5-blade`) for Craft CMS 5.
 
-It’s meant for maintainers and developers who want to understand how the plugin boots an Illuminate/Blade runtime inside Craft, how requests get routed to Blade templates, and where to extend/customize behavior.
+It’s aimed at maintainers and developers who want to understand (1) how the plugin boots a minimal Illuminate/Blade runtime inside Craft, (2) how Craft routes requests to Blade views, and (3) where to extend or override behavior (directives, globals, components, composers, and Twig/Blade bridges).
 
 ## High-level goals
 
-- **Render Laravel Blade templates** (`.blade.php`) as Craft CMS frontend templates.
-- **Expose Craft data and conveniences** in Blade templates (Craft “Twig globals”, plus optional helper/filter functions).
-- **Bridge Twig ↔ Blade** so either engine can call the other when needed.
-- Keep the integration **minimal and explicit** rather than attempting to emulate a full Laravel application.
+- **Render Laravel Blade views** (`.blade.php`) as Craft site templates.
+- **Make Craft context available** in Blade templates (Twig-style globals, plus optional helper/filter shims).
+- **Enable Twig ↔ Blade interop** so each engine can render the other when useful.
+- Keep the integration **minimal and explicit** (Blade runtime only; not a full Laravel app).
 
 ## Repository layout (plugin)
 
