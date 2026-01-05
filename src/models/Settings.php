@@ -104,6 +104,7 @@ class Settings extends Model
      *     'alert' => \modules\main\components\Alert::class,
      * ```
      *
+     * @var array<string, class-string>
      */
     public array $bladeComponents = [];
 
@@ -122,6 +123,7 @@ class Settings extends Model
      * ]
      * ```
      *
+     * @var array<string, \Closure|string>
      */
     public array $bladeViewComposers = [];
 

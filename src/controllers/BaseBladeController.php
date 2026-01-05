@@ -56,7 +56,7 @@ class BaseBladeController extends Controller
      * @throws BadRequestHttpException If the view name is invalid.
      * @throws NotFoundHttpException If the view cannot be rendered.
      */
-    public function actionRenderTemplate(string $view, string $prefix = null): string
+    public function actionRenderTemplate(string $view, ?string $prefix = null): string
     {
         if ($prefix) {
             $view = $prefix . '/' . $view;
@@ -135,7 +135,7 @@ class BaseBladeController extends Controller
      * @param string|object $class
      * @return string
      */
-    function getVariableName(string|object $class): string
+    private function getVariableName(string|object $class): string
     {
         $className = is_object($class) ? get_class($class) : $class;
 

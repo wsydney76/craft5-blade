@@ -28,59 +28,59 @@ class BladeDirectives
     {
         // Render a Twig template and echo the result.
         // Example: @renderTwig('partials/_thing', ['foo' => 'bar'])
-        View::directive('renderTwig', function($expression) {
+        View::directive('renderTwig', function (string $expression): string {
             return "<?php echo \\Craft::\$app->view->renderTemplate($expression); ?>";
         });
 
         // Render first existing view from: `{siteHandle}.{view}` then `{view}`.
         // Example: @includeLocalized('partials.meta', ['entry' => $entry])
-        View::directive('includeLocalized', function($expression) {
+        View::directive('includeLocalized', function (string $expression): string {
             return static::compileIncludeLocalized($expression);
         });
 
         // Guard directives (throw Yii HTTP exceptions)
-        View::directive('requireAdmin', function($expression) {
+        View::directive('requireAdmin', function (string $expression): string {
             return "<?php if (!\\Craft::\$app->getUser()->getIsAdmin()) { throw new \\yii\\web\\ForbiddenHttpException('Admin access required.'); } ?>";
         });
 
-        View::directive('requireLogin', function($expression) {
+        View::directive('requireLogin', function (string $expression): string {
             return "<?php if (\\Craft::\$app->getUser()->getIsGuest()) { throw new \\yii\\web\\UnauthorizedHttpException('Login required.'); } ?>";
         });
 
-        View::directive('requireGuest', function($expression) {
+        View::directive('requireGuest', function (string $expression): string {
             return "<?php if (!\\Craft::\$app->getUser()->getIsGuest()) { throw new \\yii\\web\\ForbiddenHttpException('Guest access required.'); } ?>";
         });
 
-        View::directive('requirePermission', function($expression) {
+        View::directive('requirePermission', function (string $expression): string {
             return "<?php if (!\\Craft::\$app->getUser()->checkPermission($expression)) { throw new \\yii\\web\\ForbiddenHttpException('Insufficient permissions.'); } ?>";
         });
 
         // Redirect and end the request.
         // Example: @redirect('/login', 302)
-        View::directive('redirect', function($expression) {
+        View::directive('redirect', function (string $expression): string {
             return static::compileRedirect($expression);
         });
 
         // Execute arbitrary PHP expression/assignment.
         // Example: @set($foo = 'bar')
-        View::directive('set', function($expression) {
+        View::directive('set', function (string $expression): string {
             return "<?php {$expression}; ?>";
         });
 
         // Create a paginator and export results + pageInfo into the template scope.
         // Example: @paginate($query, 'elements', 'pageInfo', ['pageSize' => 10])
-        View::directive('paginate', function($expression) {
+        View::directive('paginate', function (string $expression): string {
             return static::compilePaginate($expression);
         });
 
         // Convert Markdown -> HTML and then purify.
-        View::directive('markdown', function($expression) {
+        View::directive('markdown', function (string $expression): string {
             return static::compileMarkdown($expression);
         });
 
         // Set a single response header.
         // Usage: @header("Cache-Control: max-age=3600")
-        View::directive('header', function($expression) {
+        View::directive('header', function (string $expression): string {
             return static::compileHeader($expression);
         });
 
@@ -91,11 +91,11 @@ class BladeDirectives
         //   @endcache
         //
         // Note: For now we support the no-args form (same as `{% cache %}` with no options).
-        View::directive('cache', function($expression) {
+        View::directive('cache', function (string $expression): string {
             return static::compileCacheStart($expression);
         });
 
-        View::directive('endcache', function() {
+        View::directive('endcache', function (): string {
             return static::compileCacheEnd();
         });
 
@@ -256,7 +256,7 @@ PHP;
      *
      * Expects a single string argument containing `Header-Name: value`.
      */
-    private static function compileHeader($expression)
+    private static function compileHeader(string $expression): string
     {
         $template = <<<'PHP'
 <?php
