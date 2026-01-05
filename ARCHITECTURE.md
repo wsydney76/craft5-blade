@@ -19,7 +19,7 @@ Key locations in `blade/src/`:
 
 - `BladePlugin.php` — Craft plugin entrypoint; registers events/bridges; loads global helper/filter functions.
 - `BladeBootstrap.php` — boots the Illuminate container + view factory + Blade compiler.
-- `Blade.php` — static facade/“public API” for rendering and registering directives, components, etc.
+- `View.php` — static facade/“public API” for rendering and registering directives, components, etc.
 - `controllers/BaseBladeController.php` — Craft controller action used to render Blade views via element routing.
 - `support/`
   - `CraftContainer.php` — minimal Illuminate container with an application namespace.
@@ -441,7 +441,7 @@ In Craft, we don’t have that complete environment, so the plugin avoids facade
 
 Instead:
 
-- The plugin provides its own stable public API via `wsydney76\blade\Blade` (see `src/Blade.php`).
+- The plugin provides its own stable public API via `wsydney76\blade\View` (see `src/View.php`).
 - Internally, `BladeBootstrap` wires only the minimum Illuminate services needed for Blade rendering.
 
 This keeps the integration predictable and reduces “half-Laravel” surprises.

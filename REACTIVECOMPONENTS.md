@@ -110,7 +110,7 @@ use Craft;
 use craft\elements\Entry;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
-use wsydney76\blade\Blade;
+use wsydney76\blade\View;
 
 /**
  * Search controller
@@ -152,7 +152,7 @@ class SearchController extends Controller
                 ->all();
         }
 
-        return Blade::render('components.search-results', [
+        return View::render('components.search-results', [
             'items' => $entries,
             'q' => $this->q,
         ]);
