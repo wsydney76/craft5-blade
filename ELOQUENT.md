@@ -2,7 +2,7 @@
 
 ## Illuminate packages
 
-Add dependencies to  `composer.json`.
+Add these dependencies to `composer.json`:
 
 ```json
 {
@@ -15,7 +15,7 @@ Add dependencies to  `composer.json`.
 
 ## Bootstrapping Eloquent
 
-In a non-Laravel project, you need to manually bootstrap Eloquent in a module/plugin `init` method.
+In a non-Laravel project, you need to bootstrap Eloquent manually in your module/plugin `init()` method.
 
 ```php
 use Illuminate\Database\Capsule\Manager as Capsule;
@@ -33,40 +33,51 @@ $capsule->addConnection([
     'charset' => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
     'prefix' => '',
-]);
+], 'craftcms');
 
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 ```
 
+Naming the connection (here: `craftcms`) is optional (the default is `default`). Using a named connection lets you target a legacy database or multiple databases. If you use a non-default connection name, set the `$connection` property on your models accordingly.
+
 ## Model example
 
-Here’s an example Eloquent model for a custom table (using Craft's `assets` table as an example):
+Here’s a simple Eloquent model pointing at an existing Craft table. This example uses Craft’s `assets` table.
 
 ```php
 <?php
+namespace modules\eloquent\models;
 
-namespace modules\mymodule\models;
-
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Assets extends Model
 {
     protected $table = 'assets';
+    protected $connection = 'craftcms';
+
+    /**
+     * Scope a query to only include image assets.
+     */
+    public function scopeImages(Builder $query): Builder
+    {
+        return $query->where('kind', 'image');
+    }
 }
 ```
 
-## Querying 
+## Querying
 
-You can now use Eloquent’s querying capabilities:
+You can now use Eloquent’s query builder.
 
 Controller:
 
 ```php
-use modules\mymodule\models\Assets; 
+use modules\mymodule\models\Assets;
 ...
-$images = Assets::whereKind('image')->orderBy('filename')->get();
-``` 
+$images = Assets::images()->orderBy('filename')->get();
+```
 
 Blade template:
 
@@ -78,7 +89,7 @@ Blade template:
 
 ## Pagination
 
-Because there’s no Laravel HTTP kernel here, you’re responsible for pagination setup (current page, base path etc.).
+Because there’s no Laravel HTTP kernel here, you’re responsible for pagination setup (current page, base path, etc.).
 
 This example relies on the `config/general.php` setting `pageTrigger`:
 
@@ -88,7 +99,7 @@ This example relies on the `config/general.php` setting `pageTrigger`:
 
 The native `paginate()` method won’t work out of the box, so you need to manually create a `LengthAwarePaginator` instance.
 
-This can be done by adding a macro in your Module/Plugin bootstrap (init method):
+One option is to add a macro in your module/plugin bootstrap (`init()` method):
 
 ```php
 use Illuminate\Database\Eloquent\Builder;
@@ -102,15 +113,22 @@ Builder::macro('asCustomPaginator', function ($perPage = 12) {
     $totalCount = $this->count();
     $items = $this->offset($offset)->limit($perPage)->get();
 
+    // Rebuild the current URL without the "page" query string parameter
+    [$base, $query] = array_pad(explode('?', Craft::$app->request->absoluteUrl, 2), 2, '',);
+    parse_str($query, $params);
+    unset($params['page']);
+    $newQuery = http_build_query($params);
+    $path = $newQuery ? "$base?$newQuery" : $base;
+
     return new LengthAwarePaginator($items, $totalCount, $perPage, $page, [
-        'path' => Craft::$app->getRequest()->getAbsoluteUrl(),
+        'path' => $path,
         'pageName' => 'page',
     ]);
 });
 
 ```
 
-Now you can replace `paginate()` with `asCustomPaginator` method in your queries.
+You can then replace `paginate()` with `asCustomPaginator()` in your queries.
 
 Controller:
 
@@ -118,7 +136,7 @@ Controller:
 public function actionShow()
 {
     return View::renderTemplate('test.index', [
-        'images' => Assets::whereKind('image')->orderBy('filename')->asCustomPaginator(8),
+        'images' => Assets::images()->orderBy('filename')->asCustomPaginator(8),
     ]);
 }
 ```
@@ -128,7 +146,7 @@ Blade template:
 ```blade
 @foreach ($images as $image)
     {{ $image->filename }}
-@endforeach 
+@endforeach
 
 <div class="mt-8">
     @include('paginator.simple-tailwind', ['paginator' => $images])
@@ -137,7 +155,7 @@ Blade template:
 
 Paginator partial (`paginator/simple-tailwind.blade.php`):
 
-See `vendor/illuminate/pagination/resources/views/simple-tailwind.blade.php` for reference.
+See `vendor/illuminate/pagination/resources/views/*.blade.php` for reference.
 
 ```blade
 @if ($paginator->hasPages())
@@ -148,39 +166,26 @@ See `vendor/illuminate/pagination/resources/views/simple-tailwind.blade.php` for
     >
         {{-- Previous Page Link --}}
         @if ($paginator->onFirstPage())
-            <span
-                class="relative inline-flex cursor-default items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm leading-5 font-medium text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-600"
-            >
+            <span class="...">
                 {!! __('Previous page') !!}
             </span>
         @else
-            <a
-                href="{{ $paginator->previousPageUrl() }}"
-                rel="prev"
-                class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm leading-5 font-medium text-gray-700 ring-gray-300 transition duration-150 ease-in-out hover:text-gray-500 focus:border-blue-300 focus:ring focus:outline-none active:bg-gray-100 active:text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300"
-            >
+            <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="...">
                 {!! __('Previous page') !!}
             </a>
         @endif
 
         <div>
-            {{ __('Page') }} {{ $paginator->currentPage() }} {{ __('of') }}
-            {{ $paginator->lastPage() }}
+            {{ __('Page') }} {{ $paginator->currentPage() }} {{ __('of') }} {{ $paginator->lastPage() }}
         </div>
 
         {{-- Next Page Link --}}
         @if ($paginator->hasMorePages())
-            <a
-                href="{{ $paginator->nextPageUrl() }}"
-                rel="next"
-                class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm leading-5 font-medium text-gray-700 ring-gray-300 transition duration-150 ease-in-out hover:text-gray-500 focus:border-blue-300 focus:ring focus:outline-none active:bg-gray-100 active:text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300"
-            >
+            <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="...">
                 {!! __('Next page') !!}
             </a>
         @else
-            <span
-                class="relative inline-flex cursor-default items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm leading-5 font-medium text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-600"
-            >
+            <span class="...">
                 {!! __('Next page') !!}
             </span>
         @endif
