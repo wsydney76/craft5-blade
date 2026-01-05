@@ -2,7 +2,12 @@
 
 Enables Laravel Blade templates in Craft CMS as a modern alternative to Twig.
 
-README is a work in progress and partially AI-generated.
+Tagged version 0.1.0.
+
+This is the state of the project at the time it was handed over to the client.
+
+At this point, it is acknowledged that portions of the code and documentation are AI-generated, untested, and may be incomplete or incorrect.
+
 
 See [Architecture Overview](./ARCHITECTURE.md) for implementation details.
 
@@ -27,10 +32,8 @@ Add this to the `composer.json` file in your project root to require the plugin:
 ```json
 {
   "require": {
-    "wsydney76/craft5-blade": "dev-main"
+    "wsydney76/craft5-blade": "^0.1.0"
   },
-  "minimum-stability": "dev",
-  "prefer-stable": true,
   "repositories": [
     {
       "type": "vcs",

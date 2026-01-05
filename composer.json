@@ -2,6 +2,8 @@
   "name": "wsydney76/craft5-blade",
   "description": "Enables Blade templates for Craft CMS",
   "type": "craft-plugin",
+  "version": "0.1.0",
+  "license": "MIT",
   "require": {
     "php": ">=8.2",
     "craftcms/cms": "^5.8.0",
