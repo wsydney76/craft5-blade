@@ -91,7 +91,7 @@ Blade template:
 
 Because there’s no Laravel HTTP kernel here, you’re responsible for pagination setup (current page, base path, etc.).
 
-This example relies on the `config/general.php` setting `pageTrigger`:
+This example requires the `config/general.php -> pageTrigger` setting is set to a query string parameter, e.g.:
 
 ```php
  ->pageTrigger('?page=')
@@ -106,23 +106,24 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 ...
 
-Builder::macro('asCustomPaginator', function ($perPage = 12) {
+Builder::macro('asCustomPaginator', function (
+    $perPage = 12,
+    $pageName = 'page',
+): LengthAwarePaginator {
     /** @var Builder $this */
-    $page = Craft::$app->request->pageNum;
+    $request = Craft::$app->request;
+    $page = $request->pageNum;
     $offset = ($page - 1) * $perPage;
     $totalCount = $this->count();
     $items = $this->offset($offset)->limit($perPage)->get();
 
-    // Rebuild the current URL without the "page" query string parameter
-    [$base, $query] = array_pad(explode('?', Craft::$app->request->absoluteUrl, 2), 2, '',);
-    parse_str($query, $params);
-    unset($params['page']);
-    $newQuery = http_build_query($params);
-    $path = $newQuery ? "$base?$newQuery" : $base;
+    $params = $request->getQueryParams();
+    unset($params[$pageName]);
 
     return new LengthAwarePaginator($items, $totalCount, $perPage, $page, [
-        'path' => $path,
-        'pageName' => 'page',
+        'path' => $request->hostInfo . '/' . $request->pathInfo,
+        'query' => $params,
+        'pageName' => $pageName,
     ]);
 });
 
