@@ -68,7 +68,7 @@ Practically:
 - If `config.bladeViewsPath` exists, the `bladeViewsPath` field will show a warning and should be treated as read-only.
 - Same for `bladeCachePath`, `bladeRoutePrefixes`, and `bladeComponentPaths`.
 
-This mirrors Craft’s common plugin pattern: ".env / config wins, CP becomes informational".
+This mirrors Craft’s common plugin pattern: "config wins, CP becomes informational".
 
 ## Core runtime components
 
@@ -79,7 +79,7 @@ This mirrors Craft’s common plugin pattern: ".env / config wins, CP becomes in
 - Defines a Craft component named `blade` (see `BladePlugin::config()`), implemented by `BladeBootstrap`.
 - Registers event handlers:
   - registers the `@blade` Twig template root
-  - hooks into element routing (`Entry::EVENT_SET_ROUTE`) to support `blade:` and `.blade.php` template targets
+  - hooks into element routing (`Entry::EVENT_SET_ROUTE`) to support `action:`, `blade:` and `.blade.php` template targets
   - adds a “Blade Template Cache” entry to the “Clear Caches” utility
 - Registers the Twig → Blade bridge (`BladeTwigExtension`, providing `renderBlade()`)
 - Loads *global* helper/filter files:
@@ -89,6 +89,9 @@ This mirrors Craft’s common plugin pattern: ".env / config wins, CP becomes in
   - `BladeDirectives::register()`
   - `BladeShared::register()`
   - `BladeIfs::register()`
+  - `BladeStringables::register()`
+  - `BladeComponents::register()`
+  - `BladeViewComposers::register()`
 
 Important design note: the helper/filter files define **global PHP functions** and are loaded explicitly (not via Composer autoload) so they only run once Craft is initialized.
 
@@ -121,12 +124,6 @@ Extension points (config-driven):
 - `Settings::$bladeComponents` — class-based Blade components registered at boot.
 - `Settings::$bladeViewComposers` — view composers registered at boot.
 
-At the end of boot, `BladeBootstrap` exposes:
-
-- `render($views, $data)` — render a view name or first-existing from a list.
-- `share($key, $value)` — share global data with all views.
-- registration helpers: `directive()`, `if()`, `stringable()`, `component()`.
-
 ### 3) `CraftContainer` (minimal application namespace)
 
 Some Blade component resolution paths call `$app->getNamespace()`.
@@ -135,14 +132,15 @@ Craft isn’t a Laravel application, so `CraftContainer` provides a minimal impl
 
 If your project stores component classes under a different root namespace, this is where you’d adjust that behavior.
 
-### 4) `Blade` facade (public API for PHP + Blade integration)
+### 4) `View` facade (public API for PHP + Blade integration)
 
-`Blade` is a static façade over the plugin’s bootstrapped instance.
+`View` is a static façade over the plugin’s bootstrapped instance.
 
 It’s the recommended way to interact with the runtime from PHP code:
 
 - `View::renderTemplate($view, $data = [])`
 - `View::renderLocalized($view, $data = [])` — tries `{siteHandle}.{view}` then `{view}`
+- `View::paginate($query, $resultsKey, $pageInfoKey, $config)`
 - `View::directive($name, $handler)`
 - `View::if($name, $handler)`
 - `View::share($key, $value)`
@@ -179,10 +177,10 @@ This is an alternative “native” integration path for frontend requests.
 3. `BladePlugin::attachEventHandlers()` implements an event listener that inspects the section template setting (or field settings for Matrix, when applicable).
 4. Supported section template values:
     - `blade:some.view`
-        - routed to `"_blade/base-blade/render"` with `view` as route param.
+        - routed to `"_blade/base-blade/render-template"` with `view` as route param.
     - `path/to/template.blade.php`
         - Converted to dotted view name (`path.to.template`)
-        - routed to `"_blade/base-blade/render"` with `view` as route param.
+        - routed to `"_blade/base-blade/render-template"` with `view` as route param.
 5. The controller action `BaseBladeController::actionRenderTemplate($view)` calls `View::renderTemplate($view)` and returns HTML.
 
 **Data inputs:** the template will have access to Craft’s shared globals (see “Global variables”).
@@ -190,7 +188,6 @@ This is an alternative “native” integration path for frontend requests.
 `BaseBladeController::actionRenderTemplate()` injects the matched element into the Blade view context using a variable name derived from the element’s short class name (lowercased):
 
 - `craft\elements\Entry` → `$entry`
-- `craft\commerce\elements\Product` → `$product`
 
 So when you route an entry to `blade:blog.show`, your Blade template can typically just use `$entry` without any extra wiring.
 
@@ -370,6 +367,7 @@ Primary settings:
 - `bladeViewsPath` — views root
 - `bladeCachePath` — compilation cache root
 - `bladeComponentPaths` — additional component directories
+- `bladeRoutePrefixes` — route prefixes for direct URL rendering
 
 Because paths are resolved through `craft\helpers\App::parseEnv()`, you can use:
 
@@ -390,6 +388,8 @@ Common ways to extend behavior:
   - `View::component('alert', \App\View\Components\Alert::class);`
 - Register view composers:
   - `View::composer('blog.*', function ($view) { ... });`
+- Register stringable handlers:
+  - `View::stringable(\App\Models\MyModel::class, fn($model) => (string)$model->name);`
 
 Config-driven alternatives (in `config/_blade.php`):
 
@@ -402,7 +402,7 @@ For project-specific needs (e.g. always providing the current `Entry` as `$entry
 - The integration intentionally **doesn’t emulate** a full Laravel app; it wires only what Blade needs.
 - Global function helpers (`BladeHelpers.php`, `BladeFilters.php`) are **experimental** and may diverge from Twig semantics.
 - `BaseBladeController` injects the matched element into the view context (e.g. `$entry`, `$product`) but otherwise renders the view by name only; any additional context must be passed explicitly or attached via composers.
-- The plugin currently focuses on entry routing. Other element types may work but are not guaranteed without more testing.
+- The plugin currently focuses on entry routing. Other element types may work but are not guaranteed without custom setup (e.g. event listeners).
 
 ## Quick mental model
 

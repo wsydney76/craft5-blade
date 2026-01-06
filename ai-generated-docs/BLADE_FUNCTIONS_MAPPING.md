@@ -1,6 +1,6 @@
 # Blade Helper Functions Mapping
 
-__Note: This document is AI generated, unedited, untested. So may be correct or not.__ 
+__Note: This document is AI generated, unedited, not systematically tested. So may be correct or not.__ 
 
 This document maps each helper function in `BladeHelpers.php` to the underlying static class call or method it wraps.
 

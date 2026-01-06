@@ -2,11 +2,11 @@
 
 Enables Laravel Blade templates in Craft CMS as a modern alternative to Twig.
 
-Tagged version 0.1.0.
+Tagged version 0.1.
 
 This is the state of the project at the time it was handed over to the client.
 
-At this point, it is acknowledged that portions of the code and documentation are AI-generated, untested, and may be incomplete or incorrect.
+At this point, it is acknowledged that portions of the code and documentation are AI-generated, not systematically tested, and may be incomplete or incorrect.
 
 
 See [Architecture Overview](./ARCHITECTURE.md) for implementation details.
@@ -62,7 +62,7 @@ The CP settings page currently exposes these settings:
 - `bladeViewsPath` — Base path where Blade views live (e.g. `@root/resources/views`).
 - `bladeCachePath` — Directory where compiled Blade templates are written (must be writable).
 - `bladeRoutePrefixes` — Comma-separated route prefixes for the direct URL rendering route.
-- `bladeComponentPaths` — Anonymous component directories, optionally namespaced by prefix (e.g. `ui` → `<x-ui-*>`).
+- `bladeComponentPaths` — Anonymous component directories, optionally namespaced by prefix (e.g. `ui` → `<x-ui::*>`).
 
 ### Config file (`config/_blade.php`)
 
@@ -134,9 +134,9 @@ Missing methods can be added as needed.
 
 ### Basic setup
 
-Create your Blade templates in the `resources/views` directory (or the path configured in `config/_blade.php`).
+Create your Blade templates in the `resources/views` directory (or the path configured).
 
-The template cache is stored in `storage/runtime/blade/cache` (or the path configured in `config/_blade.php`).
+The template cache is stored in `storage/runtime/blade/cache` (or the path configured).
 
 ### Creating Blade Templates
 
@@ -168,7 +168,7 @@ Create `.blade.php` files in your views directory:
 
 ### Components
 
-Create reusable components in `resources/views/components/` (or the paths configured in `config/_blade.php`):
+Create reusable components in `resources/views/components/` (or the paths configured):
 
 #### Anonymous components (view-only)
 
@@ -183,7 +183,7 @@ Anonymous components are just Blade views in your components folder.
 <head>
     ...
     <title>{{ $title }}</title>
-    {!! Vite::getInstance()->vite->script('/resources/js/app.js', false) !!}
+    {!! $craft->vite->script('/resources/js/app.js', false) !!}
 </head>
 <body>
     @renderTwig('_layouts/nav.twig')
@@ -231,22 +231,16 @@ use Illuminate\View\Component;
 
 class EntriesList extends Component
 {
-    public string $section;
-    public ?string $title;
-    public int $limit;
-    public string $orderBy = 'postDate desc';
+    public ?string $title = null;
     public ?Collection $entries = null;
 
     public function __construct(
         string $section = '*',
         ?string $title = null,
         ?int $limit = 5,
-        ?string $orderBy = 'postDate desc')
-    {
-        $this->section = $section;
+        ?string $orderBy = 'postDate desc',
+    ) {
         $this->title = $title;
-        $this->limit = $limit;
-        $this->orderBy = $orderBy;
         $this->entries = Entry::find()
             ->section($section)
             ->limit($limit)
@@ -269,16 +263,18 @@ When using class-based components, prefer using the component’s **public props
 (Depending on your Illuminate/View version and how the engine is bootstrapped, `$component` may not be available.)
 
 ```blade
-@if($entries->count())
-    @if($title)
+@props(['title' => null, 'entries' => []])
+@if ($entries->count())
+    @if ($title)
         <h3>{{ $title }}</h3>
     @endif
 
     <ul>
-        @foreach($entries as $entry)
+        @foreach ($entries as $entry)
             <li>
                 <a href="{{ $entry->url }}" class="text-blue-600 hover:underline">
-                    {{ $entry->title }}</a>
+                    {{ $entry->title }}
+                </a>
                 <span class="text-sm text-gray-600">{{ $entry->postDate }}</span>
             </li>
         @endforeach
@@ -730,7 +726,7 @@ Usage in Blade templates:
     <p>Running in dev mode</p>
 @else   
     <p>Running in production mode</p>
-@endadmin
+@enddev
 
 
 @unlessdev
@@ -1054,6 +1050,13 @@ If you want to define type hints globally for common variables like `$entry`, pl
 
 ```php
 <?php
+
+/** @var \craft\web\twig\variables\CraftVariable $craft */
+global $craft;
+
+
+/** @var \craft\elements\User $currentUser */
+global $currentUser;
 
 /** @var \craft\elements\Entry $entry */
 global $entry;

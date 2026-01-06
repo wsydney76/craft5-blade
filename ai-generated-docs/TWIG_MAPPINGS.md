@@ -1,6 +1,6 @@
 # Twig 3.x → Laravel/Blade Equivalency Map (Functions, Filters, Tests)
 
-__Note: This document is AI generated, unedited, untested. So may be correct or not.__
+__Note: This document is AI generated, unedited, not systematically tested. So may be correct or not.__
 
 This document maps **Twig 3.x built-ins** (functions, filters, tests) to the closest **Laravel / Blade** equivalents (Blade directives, Laravel helpers, Illuminate\Support utilities, and standard PHP).
 Twig reference pages: Functions, Filters, Tests. ([Twig][1])

@@ -1,6 +1,6 @@
 # Blade Filters Quick Reference
 
-__Note: This document is AI generated, unedited, untested. So may be correct or not.__
+__Note: This document is AI generated, unedited, not systematically tested. So may be correct or not.__
 
 A quick reference guide for all Blade filter functions available in the plugin.
 
