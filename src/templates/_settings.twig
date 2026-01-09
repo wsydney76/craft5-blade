@@ -63,6 +63,9 @@
         }
     },
     rows: settings.bladeComponentPaths ?? [],
+    allowAdd: true,
+    allowDelete: true,
+    allowReorder: true,
     addRowLabel: "Add a component path"|t("_blade"),
     tip: "Values can be a Craft alias and/or environment variable."|t("_blade"),
     warning: config.bladeComponentPaths is defined ? _self.configWarning('bladeComponentPaths')
